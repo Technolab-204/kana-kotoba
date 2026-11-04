@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kana &amp; Kotoba — apprendre le japonais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ai: #141A33; --ai-2: #1E2748; --ai-3: #2C3868;
+    --paper: #F5EFE2; --muted: #9AA3C7;
+    --sakura: #F4B6C6; --sakura-d: #E58AA3;
+    --vermilion: #E4553B; --gold: #E9C46A;
+    --ok: #7BE495; --ko: #FF7070;
+    --display: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+    --body: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; color: var(--paper); font: 400 16px/1.6 var(--body); overflow-x: hidden; min-height: 100vh;
+    background: linear-gradient(180deg, #0C1026 0%, var(--ai) 45%, #23305A 80%, #3A3F6E 100%);
+  }
+  body.theme-or { background: linear-gradient(180deg, #1A0F05 0%, #3A2410 50%, #6B4A1A 100%); }
+  body::before {
+    content: ""; position: fixed; top: 7vh; right: 10vw; width: min(22vmin, 170px); aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #FFF6E2, #F1DDB4 60%, #E8CC98 100%);
+    box-shadow: 0 0 80px 20px rgba(255, 230, 180, .18); z-index: 0; pointer-events: none;
+  }
+  .mountains { position: fixed; bottom: 0; left: 0; width: 100%; height: 34vh; z-index: 0; pointer-events: none; }
+  #petals { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  button { font-family: inherit; }
+
+  .app { position: relative; z-index: 2; max-width: 540px; margin: 0 auto; padding: 16px 18px 110px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { background: rgba(20,26,51,.75); border: 1px solid rgba(244,182,198,.25); border-radius: 999px; padding: 6px 12px; font-size: 14px; display: flex; gap: 6px; align-items: center; backdrop-filter: blur(6px); white-space: nowrap; }
+  .chip b { font-weight: 700; }
+  .chip.heart b { color: var(--ko); }
+  .chip.gem b { color: #7FD6FF; }
+  .chip.flame b { color: var(--gold); }
+  .chip small { color: var(--muted); font-size: 11px; }
+  .mute { background: rgba(20,26,51,.75); border: 1px solid rgba(244,182,198,.25); border-radius: 999px; width: 38px; height: 34px; color: var(--paper); cursor: pointer; }
+
+  .brand { text-align: center; margin: 22px 0 6px; }
+  .brand h1 { font: 900 2.2rem/1 var(--display); margin: 0; text-shadow: 0 0 30px rgba(244,182,198,.35); }
+  .brand p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+
+  .view[hidden] { display: none; }
+  .view h2 { font: 700 1.25rem var(--display); margin: 22px 0 6px; }
+  .muted { color: var(--muted); font-size: 14px; }
+
+  .today { margin: 18px 0 8px; background: linear-gradient(160deg, rgba(244,182,198,.16), rgba(20,26,51,.6)); border: 1px solid rgba(244,182,198,.28); border-radius: 22px; padding: 16px 20px; display: flex; gap: 18px; align-items: center; backdrop-filter: blur(8px); }
+  .today .kj { font: 900 3.4rem/1 var(--display); color: var(--sakura); min-width: 2ch; text-align: center; }
+  .today .r { color: var(--gold); }
+
+  .path { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 10px 0; }
+  .unit-title { font: 700 1rem var(--display); color: var(--sakura); margin: 18px 0 0; letter-spacing: .04em; }
+  .node { width: 74px; height: 74px; border-radius: 50%; border: 0; cursor: pointer; position: relative; font: 900 28px var(--display); color: var(--ai); background: linear-gradient(180deg, #FFF4F7, var(--sakura)); box-shadow: 0 7px 0 var(--sakura-d), 0 16px 30px rgba(0,0,0,.35); transition: transform .15s; }
+  .node:active { transform: translateY(4px); box-shadow: 0 3px 0 var(--sakura-d); }
+  .node.locked { background: var(--ai-3); color: #5B6592; box-shadow: 0 7px 0 #1B2347; cursor: not-allowed; }
+  .node.done { background: linear-gradient(180deg, #E6FFEE, var(--ok)); box-shadow: 0 7px 0 #4FB36C; }
+  .node.current { animation: breathe 1.8s ease-in-out infinite; }
+  .node.current::after { content: ""; position: absolute; inset: -10px; border-radius: 50%; border: 2px solid var(--gold); animation: ping 1.8s ease-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.06); } }
+  @keyframes ping { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.35); opacity: 0; } }
+  .stars { font-size: 13px; color: var(--gold); letter-spacing: 2px; height: 16px; }
+  .label { font-size: 12px; color: var(--muted); margin-top: -4px; }
+  .wrapnode { display: flex; flex-direction: column; align-items: center; }
+
+  /* Mondes */
+  .worlds { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 12px; }
+  .world { background: rgba(20,26,51,.8); border: 1px solid var(--ai-3); border-radius: 20px; overflow: hidden; }
+  .world svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .world .info { padding: 14px 16px 16px; }
+  .world h3 { font: 700 1.1rem var(--display); margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .world h3 small { font: 400 12px var(--body); color: var(--gold); white-space: nowrap; }
+  .world .bar { height: 8px; background: var(--ai-3); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+  .world .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--sakura), var(--gold)); border-radius: 999px; transition: width .6s ease; }
+  .world.locked svg { filter: grayscale(1) brightness(.5); }
+  .ff { animation: fly 4s ease-in-out infinite alternate; }
+  @keyframes fly { 0% { opacity: .2; transform: translateY(0); } 100% { opacity: 1; transform: translateY(-6px); } }
+
+  /* Boutique */
+  .boost-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .shop { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .item { background: rgba(20,26,51,.8); border: 1px solid var(--ai-3); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .item .ico { font-size: 30px; line-height: 1; }
+  .item h4 { margin: 4px 0 0; font: 700 15px var(--body); }
+  .item p { margin: 0; color: var(--muted); font-size: 13px; flex: 1; }
+  .buy { margin-top: 8px; border: 0; border-radius: 12px; padding: 9px 10px; font: 700 14px var(--body); background: linear-gradient(180deg, #DDF3FF, #7FD6FF); color: var(--ai); cursor: pointer; box-shadow: 0 4px 0 #4BA7D6; }
+  .buy:active { transform: translateY(2px); box-shadow: 0 2px 0 #4BA7D6; }
+  .buy:disabled { background: var(--ai-3); color: #6E7599; box-shadow: none; cursor: not-allowed; }
+  .buy.owned { background: var(--ai-3); color: var(--ok); box-shadow: none; }
+
+  .profile { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .profile div { background: rgba(20,26,51,.7); border: 1px solid var(--ai-3); border-radius: 16px; padding: 14px 8px; text-align: center; }
+  .profile strong { display: block; font: 900 1.5rem/1.1 var(--display); color: var(--gold); }
+  .profile span { font-size: 12px; color: var(--muted); }
+  .reset { display: block; margin: 20px auto 0; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
+
+  nav.bottom { position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; display: flex; justify-content: space-around; background: rgba(12,16,38,.92); border-top: 1px solid var(--ai-3); backdrop-filter: blur(8px); padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); }
+  nav.bottom button { background: none; border: 0; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; cursor: pointer; padding: 6px 18px; border-radius: 14px; }
+  nav.bottom button span { font-size: 22px; }
+  nav.bottom button[aria-selected="true"] { color: var(--paper); background: rgba(244,182,198,.12); }
+
+  /* Leçon */
+  .lesson { position: fixed; inset: 0; z-index: 40; background: linear-gradient(180deg, #0C1026, #1E2748); display: flex; flex-direction: column; }
+  .lesson[hidden] { display: none; }
+  .lesson-in { max-width: 540px; width: 100%; margin: 0 auto; padding: 18px; flex: 1; display: flex; flex-direction: column; }
+  .lhead { display: flex; align-items: center; gap: 14px; }
+  .close { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; padding: 4px; }
+  .prog { flex: 1; height: 16px; background: var(--ai-3); border-radius: 999px; overflow: hidden; }
+  .prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sakura), var(--sakura-d)); border-radius: 999px; transition: width .5s cubic-bezier(.3,1.3,.5,1); box-shadow: 0 0 14px rgba(244,182,198,.6); }
+  .lhearts { color: var(--ko); font-weight: 700; min-width: 3ch; text-align: right; }
+  .qtitle { color: var(--muted); font-size: 14px; text-align: center; margin: 26px 0 0; }
+  .qprompt { font: 900 clamp(6rem, 26vw, 9rem)/1.1 var(--display); text-align: center; margin: 8px 0 22px; text-shadow: 0 0 40px rgba(244,182,198,.25); }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; }
+  .opt { background: var(--ai-2); border: 2px solid var(--ai-3); border-bottom-width: 5px; border-radius: 16px; padding: 16px 10px; color: var(--paper); font: 500 18px var(--body); cursor: pointer; transition: transform .12s, background .2s; min-height: 64px; }
+  .opt:active { transform: translateY(2px); }
+  .opt kbd { display: block; font-size: 11px; color: var(--muted); font-family: var(--body); margin-bottom: 2px; }
+  .opt.right { background: rgba(123,228,149,.18); border-color: var(--ok); color: var(--ok); }
+  .opt.wrong { background: rgba(255,112,112,.16); border-color: var(--ko); color: var(--ko); animation: shake .4s; }
+  .opt:disabled { cursor: default; }
+  @keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+  .feedback { height: 78px; margin: 14px -18px 0; padding: 14px 22px; display: flex; flex-direction: column; justify-content: center; font-weight: 500; transition: background .25s; background: var(--ai); }
+  .feedback.ok { background: #1F4D3A; color: var(--ok); }
+  .feedback.ko { background: #5A2430; color: #FFB3B3; }
+  .feedback small { font-weight: 400; color: var(--paper); opacity: .9; }
+  .done-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
+  .done-screen .big { font: 900 2.6rem/1.1 var(--display); color: var(--gold); }
+  .done-screen .xp { font-size: 18px; color: var(--sakura); }
+  .btn-main { margin-top: 18px; background: linear-gradient(180deg, #FFF4F7, var(--sakura)); color: var(--ai); border: 0; border-radius: 16px; padding: 14px 40px; font: 700 17px var(--body); box-shadow: 0 6px 0 var(--sakura-d); cursor: pointer; }
+  .btn-main:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--sakura-d); }
+
+  /* Verdicts */
+  .verdict { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 50; }
+  .verdict.ok { --c: var(--ok); }
+  .verdict.ko { --c: var(--ko); }
+  .verdict .ring { position: absolute; width: 56vmin; height: 56vmin; border-radius: 50%; border: 3px solid var(--c); animation: ring 1s ease-out both; }
+  .verdict .thumb { width: min(40vmin, 280px); aspect-ratio: 1; animation: pop .75s cubic-bezier(.2,1.4,.4,1) both; }
+  .verdict.ko .thumb { animation: sink .95s cubic-bezier(.3,.7,.4,1) both; }
+  .verdict svg { width: 100%; height: 100%; fill: var(--c); filter: drop-shadow(0 0 28px var(--c)); }
+  .verdict.ko svg { transform: rotate(180deg); }
+  .verdict .p { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--c); animation: burst 1.1s ease-out both; }
+  @keyframes pop { 0% { transform: scale(.2) translateY(40px); opacity: 0; } 50% { transform: scale(1.12) translateY(-8px); opacity: 1; } 75% { transform: scale(.97); } 100% { transform: scale(1); } }
+  @keyframes sink { 0% { transform: translateY(-55vh) scale(.6); opacity: 0; } 45% { transform: translateY(0) scale(1.08); opacity: 1; } 58% { transform: translateX(-12px); } 70% { transform: translateX(12px); } 82% { transform: translateX(-6px); } 100% { transform: translateX(0) scale(1); } }
+  @keyframes ring { from { transform: scale(.3); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
+  @keyframes burst { to { transform: translate(var(--dx), var(--dy)) scale(.1); opacity: 0; } }
+
+  /* Scènes aléatoires */
+  .scene { position: fixed; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; }
+  .scene .petal { position: absolute; left: 50%; top: 45%; width: 16px; height: 12px; background: radial-gradient(circle at 30% 30%, #FFE3EC, var(--sakura) 70%); border-radius: 0 100% 0 100%; animation: petalburst 1.9s cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes petalburst { 0% { transform: translate(-50%,-50%) rotate(0) scale(.4); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r)) scale(1); opacity: 0; } }
+  .scene .koi { position: absolute; top: 38%; left: -30%; width: 46vw; max-width: 260px; animation: swim 2.6s ease-in-out both; }
+  .scene .koi .tail { transform-origin: 20% 50%; animation: wag .35s ease-in-out infinite alternate; }
+  @keyframes swim { from { transform: translateX(0) translateY(20px) rotate(-6deg); } 50% { transform: translateX(80vw) translateY(-30px) rotate(4deg); } to { transform: translateX(160vw) translateY(10px); } }
+  @keyframes wag { to { transform: skewY(16deg); } }
+  .scene .lant { position: absolute; bottom: -20%; width: 46px; animation: rise 2.6s ease-in both; }
+  @keyframes rise { to { transform: translateY(-130vh); } }
+  .scene .enso { position: absolute; left: 50%; top: 50%; width: min(70vmin, 380px); transform: translate(-50%,-50%); animation: fadeout 2.2s ease 1.2s both; }
+  .scene .enso path { fill: none; stroke: var(--vermilion); stroke-width: 16; stroke-linecap: round; stroke-dasharray: 900; stroke-dashoffset: 900; animation: draw 1.2s ease-out forwards; filter: drop-shadow(0 0 10px rgba(228,85,59,.6)); }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes fadeout { to { opacity: 0; } }
+  #hanabi { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 46; pointer-events: none; }
+
+  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 60; background: var(--ai-2); border: 1px solid var(--sakura); border-radius: 999px; padding: 8px 18px; font-size: 14px; animation: toast 2.6s ease both; pointer-events: none; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  @keyframes toast { 0%, 100% { opacity: 0; transform: translate(-50%, -10px); } 12%, 80% { opacity: 1; transform: translate(-50%, 0); } }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; } #petals { display: none; } }
+  /* Comptes, menu, réglages, ligue */
+  .avatarbtn { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--sakura); padding: 0; overflow: hidden; cursor: pointer; background: var(--ai-2); flex: none; display: grid; place-items: center; }
+  .avatarbtn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .menu { position: fixed; top: 64px; right: 14px; z-index: 70; min-width: 230px; background: var(--ai-2); border: 1px solid var(--ai-3); border-radius: 16px; padding: 8px; box-shadow: 0 20px 40px rgba(0,0,0,.5); }
+  .menu[hidden] { display: none; }
+  .menu .who { padding: 8px 10px 10px; border-bottom: 1px solid var(--ai-3); margin-bottom: 6px; }
+  .menu button { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--paper); padding: 10px; border-radius: 10px; cursor: pointer; font: 500 15px var(--body); }
+  .menu button:hover { background: var(--ai-3); }
+  .auth { position: fixed; inset: 0; z-index: 90; background: linear-gradient(180deg, #0C1026, #1E2748); display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
+  .auth[hidden], .modal[hidden] { display: none; }
+  .card2 { width: 100%; max-width: 420px; background: rgba(20,26,51,.95); border: 1px solid var(--ai-3); border-radius: 22px; padding: 26px; }
+  .modal { position: fixed; inset: 0; z-index: 80; background: rgba(5,8,20,.7); display: flex; align-items: center; justify-content: center; padding: 18px; }
+  .modal .card2 { max-height: 90vh; overflow: auto; max-width: 480px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 13px; color: var(--muted); }
+  .field input { padding: 11px 12px; border-radius: 10px; border: 1px solid var(--ai-3); background: var(--ai); color: var(--paper); font: 400 16px var(--body); }
+  .tabsm { display: flex; gap: 6px; margin-bottom: 16px; }
+  .tabsm button { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--ai-3); background: none; color: var(--muted); cursor: pointer; font: 500 14px var(--body); }
+  .tabsm button[aria-selected="true"] { background: var(--ai-3); color: var(--paper); }
+  .err { color: var(--ko); font-size: 14px; min-height: 1.4em; margin: 4px 0 8px; }
+  .pbtn { width: 100%; padding: 12px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFF4F7, var(--sakura)); color: var(--ai); font: 700 15px var(--body); cursor: pointer; box-shadow: 0 5px 0 var(--sakura-d); }
+  .link { background: none; border: 0; color: var(--gold); cursor: pointer; font: 500 14px var(--body); margin: 10px 0 0; text-decoration: underline; padding: 0; }
+  .codes { font-family: ui-monospace, monospace; background: var(--ai); border-radius: 10px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 15px; margin: 10px 0 16px; }
+  .drop { border: 2px dashed var(--sakura); border-radius: 16px; padding: 18px; text-align: center; cursor: pointer; transition: background .2s; font-size: 14px; }
+  .drop.over { background: rgba(244,182,198,.14); }
+  .row2 { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--ai-3); }
+  .modal h3 { font: 700 1rem var(--display); margin: 22px 0 10px; color: var(--sakura); }
+  .emo, .swatch { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--ai-3); background: var(--ai); cursor: pointer; font-size: 18px; }
+  .swatch { border-radius: 50%; border: 2px solid transparent; }
+  .miniav { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; display: inline-grid; place-items: center; vertical-align: middle; margin-right: 8px; }
+  .miniav img { width: 100%; height: 100%; object-fit: cover; }
+  .lb { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 15px; }
+  .lb td { padding: 10px 6px; border-bottom: 1px solid var(--ai-3); }
+  .lb tr.me td { color: var(--gold); font-weight: 700; }
+  .lb .rank { width: 40px; color: var(--muted); }
+  .chip-btn { font: inherit; color: var(--paper); cursor: pointer; border-radius: 999px; border: 1px solid var(--ai-3); background: var(--ai); padding: 6px 14px; }
+  /* Fond animé fixe : ne défile pas avec la page, change selon le thème de leçon */
+  html { background: #0C1026; }
+  body, body.theme-or { background: transparent !important; }
+  body::before, .mountains { display: none !important; }
+  #bgWrap { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  #bgSky { position: absolute; inset: 0; }
+  #fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .bgl { position: absolute; inset: 0; opacity: 0; }
+  .bgl.in { opacity: 1; animation: bgin 1.2s ease both; }
+  .bgl.out { animation: bgout 1.2s ease both; }
+  .bgl.hue.in { animation: bgin 1.2s ease both, hueshift 40s linear infinite; }
+  .bgl .sun { position: absolute; top: 7vh; right: 10vw; width: min(22vmin, 170px); aspect-ratio: 1; border-radius: 50%; }
+  .bgl .hills { position: absolute; left: 0; bottom: 0; width: 100%; height: 34vh; display: block; }
+  body.theme-or #bgSky { filter: sepia(.3) saturate(1.25); }
+  .lesson { background: transparent !important; }
+  /* Pendant l'introduction ou une leçon, seul le décor et la fenêtre restent visibles */
+  body:has(#intro) .app, body:has(#intro) nav.bottom,
+  body:has(#lesson:not([hidden])) .app, body:has(#lesson:not([hidden])) nav.bottom { visibility: hidden; }
+  .lesson .qprompt, .lesson .qtitle, .lesson .intro-meta { text-shadow: 0 2px 14px rgba(0,0,0,.65); }
+  @keyframes bgin { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes bgout { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes hueshift { to { filter: hue-rotate(360deg); } }
+  /* Correctif : espacement du chemin, titres lisibles au-dessus du fond */
+  .path { gap: 28px; }
+  .unit-title { display: inline-block; margin: 36px 0 2px; padding: 4px 14px; border-radius: 999px; background: rgba(12,16,38,.6); position: relative; z-index: 2; }
+  .wrapnode { position: relative; z-index: 1; margin-bottom: 4px; }
+  .wrapnode .stars { height: auto; min-height: 16px; margin-top: 10px; }
+  .wrapnode .label { margin-top: 4px; padding: 2px 10px; border-radius: 999px; background: rgba(12,16,38,.6); white-space: nowrap; position: relative; z-index: 2; }
+  .node { z-index: 1; }
+  .node.current::after { inset: -8px; pointer-events: none; }
+  /* Introduction de leçon : fenêtre sans fond, titre vif */
+  .intro { position: fixed; inset: 0; z-index: 44; display: flex; align-items: center; justify-content: center; padding: 24px; background: transparent; }
+  .intro-card { max-width: 440px; width: 100%; text-align: center; background: transparent; border: 2px solid rgba(244,182,198,.5); border-radius: 36px; padding: 34px 26px; box-shadow: 0 0 36px rgba(244,182,198,.22); text-shadow: 0 2px 14px rgba(0,0,0,.65); }
+  .intro-kicker { margin: 0 0 6px; font-size: 13px; letter-spacing: .14em; color: var(--gold); font-weight: 700; }
+  .intro-title { margin: 0; font: 900 clamp(2.3rem, 8vw, 3.2rem)/1.1 var(--display); background: linear-gradient(90deg, var(--sakura), var(--gold), #FF9E8A, var(--sakura)); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, pop .8s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes shimmer { to { background-position: 200% center; } }
+  .intro-chars { font: 700 1.8rem/1.4 var(--display); letter-spacing: .2em; margin: 18px 0 6px; color: var(--paper); }
+  .intro-meta { color: var(--paper); opacity: .8; font-size: 14px; margin: 0 0 22px; }
+  .intro-go { border: 0; border-radius: 999px; padding: 14px 36px; font: 700 17px var(--body); background: linear-gradient(180deg, #FFF4F7, var(--sakura)); color: var(--ai); box-shadow: 0 6px 0 var(--sakura-d); cursor: pointer; }
+  .intro-go:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--sakura-d); }
+  .intro-cancel { background: none; border: 0; color: var(--paper); opacity: .75; margin-top: 14px; cursor: pointer; font: 500 14px var(--body); }
+  /* Retour « Très bien » : bloc arrondi au lieu d'une barre pleine largeur */
+  .feedback { margin: 14px 0 0; height: auto; min-height: 78px; border-radius: 22px; padding: 16px 20px; }
+  /* Bouton de profil remplacé par l'onglet du bas */
+  #avatarBtn { display: none !important; }
+  nav.bottom { justify-content: space-between; padding-left: 6px; padding-right: 6px; }
+  nav.bottom button { padding: 6px 6px; font-size: 11px; min-width: 0; flex: 1; }
+  nav.bottom button span { font-size: 19px; }
+  nav.bottom button.modo-tab { display: none; }
+  body.is-mod nav.bottom button.modo-tab { display: flex; }
+
+  /* Flamme de série */
+  .flame-svg { display: inline-block; vertical-align: middle; transform-origin: 50% 100%; }
+  .flame-svg.lit { animation: flicker 1.6s ease-in-out infinite; }
+  .flame-big .flame-svg { width: 34px; height: 44px; }
+  @keyframes flicker { 0%, 100% { transform: scale(1) rotate(-1deg); } 50% { transform: scale(1.07, .95) rotate(1.5deg); } }
+
+  /* Profil */
+  .pcard { display: flex; gap: 16px; align-items: center; background: rgba(20,26,51,.75); border: 1px solid var(--ai-3); border-radius: 24px; padding: 18px; margin-top: 12px; }
+  .pav { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; flex: none; display: grid; place-items: center; border: 3px solid var(--sakura); }
+  .pav img { width: 100%; height: 100%; object-fit: cover; }
+  .pname { margin: 0; font: 900 1.4rem var(--display); }
+  .pstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+  .pstats div { background: rgba(20,26,51,.75); border: 1px solid var(--ai-3); border-radius: 16px; padding: 12px 4px; text-align: center; font-size: 12px; color: var(--muted); }
+  .pstats strong { display: block; color: var(--gold); font: 900 1.05rem var(--display); }
+  .pactions { display: flex; flex-direction: column; gap: 10px; }
+  .pbtn.ghost { background: none; color: var(--paper); box-shadow: none; border: 1px solid var(--ai-3); }
+  .row-btns { display: flex; gap: 10px; }
+  .row-btns .pbtn { width: auto; flex: 1; }
+  .sel { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--ai-3); background: var(--ai); color: var(--paper); font: 400 15px var(--body); }
+  .sheet { z-index: 85; }
+  .photo-prev { width: 150px; height: 150px; margin: 0 auto 14px; border-radius: 50%; overflow: hidden; border: 3px solid var(--sakura); display: grid; place-items: center; }
+  .photo-prev canvas { width: 100%; height: 100%; }
+  .chips-f { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .fchip { border: 1px solid var(--ai-3); background: var(--ai); color: var(--paper); border-radius: 999px; padding: 7px 12px; cursor: pointer; font: 500 13px var(--body); }
+  .fchip.on { background: var(--sakura); color: var(--ai); border-color: var(--sakura); }
+
+  /* Modération */
+  .rep { background: rgba(20,26,51,.8); border: 1px solid var(--ai-3); border-radius: 18px; padding: 14px; margin: 10px 0; }
+  .rep.done { opacity: .6; }
+  .rhead { font-size: 13px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .rtype { background: var(--vermilion); color: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: 12px; }
+  .rmsg { margin: 8px 0; font-size: 15px; }
+  .rmeta { font-size: 13px; color: var(--muted); }
+  .ractions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ractions button { background: var(--ai); border: 1px solid var(--ai-3); color: var(--paper); border-radius: 10px; padding: 7px 10px; cursor: pointer; font: 500 13px var(--body); }
+  .rep-btn { background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 13px; padding: 0 4px; }
+  .rep-btn:hover { color: var(--ko); }
+  .mtools { margin-left: auto; display: inline-flex; gap: 4px; align-items: center; }
+
+  /* Chat */
+  .chat-rules { font-size: 13px; color: var(--muted); background: rgba(20,26,51,.7); border: 1px solid var(--ai-3); border-radius: 14px; padding: 10px 14px; margin: 12px 0; }
+  .chat-status { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .chip-mod { background: var(--gold); color: var(--ai); border-radius: 999px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+  .chat-list { height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 6px; background: rgba(12,16,38,.45); border: 1px solid var(--ai-3); border-radius: 18px; }
+  .msg { background: rgba(30,39,72,.85); border-radius: 16px; padding: 8px 12px; max-width: 88%; align-self: flex-start; }
+  .msg.me { align-self: flex-end; background: rgba(244,182,198,.2); }
+  .msg .mh { font-size: 13px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .msg .mt { font-size: 15px; word-break: break-word; white-space: pre-wrap; }
+  .msg .mt.del { font-style: italic; opacity: .6; }
+  .mod-tools { margin-left: auto; display: inline-flex; gap: 4px; }
+  .mod-tools button { background: none; border: 1px solid var(--ai-3); border-radius: 8px; cursor: pointer; padding: 2px 6px; font-size: 12px; }
+  .chat-form { display: flex; gap: 8px; margin-top: 10px; }
+  .chat-form input { flex: 1; min-width: 0; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--ai-3); background: var(--ai); color: var(--paper); font: 400 16px var(--body); }
+  .chat-form input:disabled { opacity: .5; }
+  #v-chat { padding-bottom: 120px; }
+  .chat-list { height: calc(100vh - 380px); min-height: 220px; }
+  .chat-form { position: sticky; bottom: 86px; z-index: 3; background: var(--ai); padding: 10px 0 6px; }
+  .chat-form input { background: var(--ai-2); }
+</style>
+</head>
+<body>
+
+<div id="bgWrap" aria-hidden="true"><div id="bgSky"></div><canvas id="fx"></canvas></div>
+<svg class="mountains" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+  <path fill="#1A2140" d="M0 230 L120 150 L230 210 L380 120 L520 200 L640 140 L780 220 L920 110 L1080 200 L1200 150 L1320 210 L1440 170 L1440 320 L0 320Z"/>
+  <path fill="#0F1530" d="M0 270 L160 220 L300 265 L470 200 L650 262 L820 215 L1000 268 L1180 225 L1330 262 L1440 240 L1440 320 L0 320Z"/>
+</svg>
+<canvas id="petals" aria-hidden="true"></canvas>
+<div class="auth" id="auth" hidden><div class="card2" id="authBody"></div></div>
+<div class="modal" id="modal" hidden><div class="card2" id="modalBody"></div></div>
+<div class="menu" id="menu" hidden></div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="chips">
+      <div class="chip flame" title="Série de jours"><span id="flame"></span><b id="streak">0</b></div>
+      <div class="chip heart" title="Cœurs"><span>♥</span><b id="hearts">5/5</b><small id="heartTimer"></small></div>
+      <div class="chip gem" title="Koban, la monnaie du jeu"><span>◆</span><b id="koban">0</b></div>
+    </div>
+    <button class="avatarbtn" id="avatarBtn" aria-label="Profil et paramètres" aria-haspopup="true"></button>
+    <button class="mute" id="mute" aria-label="Activer ou couper le son">♪</button>
+  </div>
+
+  <!-- CHEMIN -->
+  <div class="view" id="v-chemin">
+    <div class="brand"><h1>Kana &amp; Kotoba</h1><p>Un chemin de cerisiers, une leçon à la fois</p></div>
+    <div class="today" id="today"></div>
+    <div class="path" id="path"></div>
+  </div>
+
+  <!-- LIGUE -->
+  <div class="view" id="v-ligue" hidden>
+    <h2>Ligue</h2>
+    <p class="muted">Vos XP de leçons vous font monter de ligue. Le classement de la semaine repart à zéro chaque lundi.</p>
+    <div id="ligueBody"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="view" id="v-chat" hidden>
+    <h2>Chat communautaire</h2>
+    <div id="chatBody"></div>
+  </div>
+
+  <!-- PROFIL -->
+  <div class="view" id="v-profil" hidden>
+    <h2>Mon profil</h2>
+    <div id="profilBody"></div>
+  </div>
+
+  <!-- MODERATION : réservé aux modérateurs -->
+  <div class="view" id="v-modo" hidden>
+    <h2>Modération</h2>
+    <p class="muted">Signalements envoyés par les joueurs. Visible seulement pour les modérateurs.</p>
+    <div id="modoBody"></div>
+  </div>
+
+  <!-- MONDES -->
+  <div class="view" id="v-mondes" hidden>
+    <h2>Vos mondes</h2>
+    <p class="muted">Chaque monde grandit avec vos leçons et votre précision. Atteignez le niveau 4 pour tout débloquer.</p>
+    <div class="worlds" id="worlds"></div>
+    <div class="profile" id="profile"></div>
+  </div>
+
+  <!-- BOUTIQUE -->
+  <div class="view" id="v-boutique" hidden>
+    <h2>Boutique</h2>
+    <p class="muted">Dépensez vos koban pour recharger vos cœurs, booster vos gains ou personnaliser le décor.</p>
+    <div class="boost-list" id="activeBoosts"></div>
+    <div class="shop" id="shop"></div>
+    <button class="reset" id="reset" type="button">Réinitialiser ma progression</button>
+  </div>
+</div>
+
+<nav class="bottom" aria-label="Navigation principale">
+  <button role="tab" aria-selected="true" data-view="chemin"><span>🌸</span>Chemin</button>
+  <button role="tab" aria-selected="false" data-view="mondes"><span>🗾</span>Mondes</button>
+  <button role="tab" aria-selected="false" data-view="ligue"><span>🏆</span>Ligue</button>
+  <button role="tab" aria-selected="false" data-view="chat"><span>💬</span>Chat</button>
+  <button role="tab" aria-selected="false" data-view="profil"><span>👤</span>Profil</button>
+  <button role="tab" aria-selected="false" data-view="modo" class="modo-tab"><span>🛡</span>Modé</button>
+  <button role="tab" aria-selected="false" data-view="boutique"><span>🏮</span>Boutique</button>
+</nav>
+
+<div class="lesson" id="lesson" hidden role="dialog" aria-modal="true" aria-label="Leçon">
+  <div class="lesson-in">
+    <div class="lhead">
+      <button class="close" id="quit" aria-label="Quitter la leçon">✕</button>
+      <div class="prog"><i id="progBar"></i></div>
+      <div class="lhearts" id="lhearts">♥ 5</div>
+    </div>
+    <div id="lessonBody" style="flex:1; display:flex; flex-direction:column"></div>
+  </div>
+</div>
+
+<script>
+  /* ---------- Données ---------- */
+  const HIRA = [["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"],["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"],["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"],["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"],["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"],["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"],["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"],["や","ya"],["ゆ","yu"],["よ","yo"],["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"],["わ","wa"],["を","wo"],["ん","n"]];
+  const KATA = [["ア","a"],["イ","i"],["ウ","u"],["エ","e"],["オ","o"],["カ","ka"],["キ","ki"],["ク","ku"],["ケ","ke"],["コ","ko"],["サ","sa"],["シ","shi"],["ス","su"],["セ","se"],["ソ","so"],["タ","ta"],["チ","chi"],["ツ","tsu"],["テ","te"],["ト","to"],["ナ","na"],["ニ","ni"],["ヌ","nu"],["ネ","ne"],["ノ","no"],["ハ","ha"],["ヒ","hi"],["フ","fu"],["ヘ","he"],["ホ","ho"],["マ","ma"],["ミ","mi"],["ム","mu"],["メ","me"],["モ","mo"],["ヤ","ya"],["ユ","yu"],["ヨ","yo"],["ラ","ra"],["リ","ri"],["ル","ru"],["レ","re"],["ロ","ro"],["ワ","wa"],["ヲ","wo"],["ン","n"]];
+  const KANJI = [
+    ["日","soleil, jour"],["月","lune, mois"],["火","feu"],["水","eau"],["木","arbre, bois"],["金","or, argent"],["土","terre, sol"],["山","montagne"],["川","rivière"],
+    ["人","personne"],["口","bouche"],["目","œil"],["耳","oreille"],["手","main"],["足","pied"],
+    ["大","grand"],["小","petit"],["中","milieu"],["上","dessus"],["下","dessous"],
+    ["本","livre"],["年","année"]
+  ].map(([c, m]) => ({ c, m, label: m, kind: "kanji" }));
+  const KANA_ITEMS = [...HIRA, ...KATA].map(([c, r]) => ({ c, label: r, kind: "kana" }));
+
+  const KANA_GROUPS = [[0,5,"Voyelles"],[5,10,"K"],[10,15,"S"],[15,20,"T"],[20,25,"N"],[25,30,"H"],[30,35,"M"],[35,46,"Y · R · W"]];
+  const PATH = [];
+  KANA_GROUPS.forEach(([a, b, t]) => PATH.push({ id: "h" + a, unit: "Hiragana", t, items: HIRA.slice(a, b).map(([c, r]) => ({ c, label: r, kind: "kana" })) }));
+  KANA_GROUPS.forEach(([a, b, t]) => PATH.push({ id: "k" + a, unit: "Katakana", t, items: KATA.slice(a, b).map(([c, r]) => ({ c, label: r, kind: "kana" })) }));
+  [[0,9,"Nature"],[9,15,"Corps"],[15,20,"Adjectifs · position"],[20,22,"Mots"]].forEach(([a, b, t]) =>
+    PATH.push({ id: "j" + a, unit: "Kanji", t, items: KANJI.slice(a, b) }));
+
+  // Réordonnancement : kana, grammaire, vocabulaire, kanji et mots composés s'entrelacent
+  const HK = PATH.splice(0, PATH.length);
+  HK.forEach((u, i) => { u.world = i < 8 ? "w1" : i < 16 ? "w2" : "w3"; });
+  const PARTICLES = ["は", "が", "を", "に", "へ", "で", "ます", "ません", "です", "ですか"];
+  const GRAMMAR_UNITS = [
+    { t: "Particules : は, が, を, へ, で", items: [
+      { s: "わたし___ がくせいです。", opt: "は", fr: "Je suis étudiant(e). は marque le thème." },
+      { s: "ねこ___ すきです。", opt: "が", fr: "J'aime les chats. が accompagne す き." },
+      { s: "みず___ のみます。", opt: "を", fr: "Je bois de l'eau. を marque l'objet." },
+      { s: "にほん___ いきます。", opt: "へ", fr: "Je vais au Japon. へ marque la direction." },
+      { s: "がっこう___ べんきょうします。", opt: "で", fr: "J'étudie à l'école. で marque le lieu de l'action." }] },
+    { t: "Forme polie : ます, ません", items: [
+      { s: "わたしは ごはんを たべ___。", opt: "ます", fr: "Je mange du riz. ます : forme polie." },
+      { s: "わたしは みずを のみ___。", opt: "ます", fr: "Je bois de l'eau. ます : forme polie." },
+      { s: "あした がっこうに いき___。", opt: "ません", fr: "Je ne vais pas à l'école demain. ません : négation polie." }] },
+    { t: "Questions avec か", items: [
+      { s: "これは ほん___。", opt: "ですか", fr: "C'est un livre ? です + か forme une question." },
+      { s: "あなたは がくせい___。", opt: "ですか", fr: "Vous êtes étudiant(e) ?" },
+      { s: "これは ねこ___。", opt: "です", fr: "C'est un chat. です : affirmation polie." }] }
+  ];
+  const VOCAB_UNITS = [
+    { t: "Famille et personnes", items: [["父", "père", "chichi"], ["母", "mère", "haha"], ["友達", "ami", "tomodachi"], ["先生", "professeur", "sensei"], ["学生", "étudiant", "gakusei"]] },
+    { t: "Animaux et nature", items: [["猫", "chat", "neko"], ["犬", "chien", "inu"], ["魚", "poisson", "sakana"], ["花", "fleur", "hana"], ["水", "eau", "mizu"]] },
+    { t: "Nourriture", items: [["ご飯", "riz cuit, repas", "gohan"], ["お茶", "thé", "ocha"], ["りんご", "pomme", "ringo"], ["パン", "pain", "pan"], ["牛乳", "lait", "gyūnyū"]] },
+    { t: "Temps et lieux", items: [["今日", "aujourd'hui", "kyō"], ["明日", "demain", "ashita"], ["昨日", "hier", "kinō"], ["学校", "école", "gakkō"], ["駅", "gare", "eki"]] },
+    { t: "Couleurs", items: [["赤", "rouge", "aka"], ["青", "bleu", "ao"], ["白", "blanc", "shiro"], ["黒", "noir", "kuro"], ["黄色", "jaune", "kiiro"]] },
+    { t: "Corps", items: [["頭", "tête", "atama"], ["腕", "bras", "ude"], ["鼻", "nez", "hana"], ["口", "bouche", "kuchi"], ["足", "jambe", "ashi"]] },
+    { t: "Transports", items: [["電車", "train", "densha"], ["車", "voiture", "kuruma"], ["自転車", "vélo", "jitensha"], ["バス", "bus", "basu"], ["飛行機", "avion", "hikōki"]] },
+    { t: "Maison", items: [["家", "maison", "ie"], ["部屋", "pièce", "heya"], ["椅子", "chaise", "isu"], ["机", "bureau", "tsukue"], ["窓", "fenêtre", "mado"]] },
+    { t: "Météo et saisons", items: [["雨", "pluie", "ame"], ["雪", "neige", "yuki"], ["風", "vent", "kaze"], ["夏", "été", "natsu"], ["冬", "hiver", "fuyu"]] },
+    { t: "Verbes courants", items: [["食べる", "manger", "taberu"], ["飲む", "boire", "nomu"], ["行く", "aller", "iku"], ["見る", "voir", "miru"], ["話す", "parler", "hanasu"]] }
+  ];
+  const COMPOUNDS = [
+    { c: "日本", m: "Japon", parts: "日 (soleil) + 本 (origine)" },
+    { c: "火山", m: "volcan", parts: "火 (feu) + 山 (montagne)" },
+    { c: "山川", m: "montagnes et rivières", parts: "山 (montagne) + 川 (rivière)" },
+    { c: "人口", m: "population", parts: "人 (personne) + 口 (bouche)" },
+    { c: "月曜日", m: "lundi", parts: "月 (lune) + 曜 (jour de la semaine) + 日 (jour)" },
+    { c: "木曜日", m: "jeudi", parts: "木 (arbre) + 曜 + 日" },
+    { c: "土曜日", m: "samedi", parts: "土 (terre) + 曜 + 日" },
+    { c: "日曜日", m: "dimanche", parts: "日 (soleil) + 曜 + 日" }
+  ];
+  const VO_U = VOCAB_UNITS.map((u, i) => ({ id: "v" + i, unit: "Vocabulaire", t: u.t, kind: "vocab", world: i < 2 ? "w1" : i < 6 ? "w2" : "w3",
+    items: u.items.map(([c, fr, r]) => ({ c, label: fr, r, kind: "vocab" })) }));
+  const GR_U = GRAMMAR_UNITS.map((u, i) => ({ id: "g" + i, unit: "Grammaire", t: u.t, kind: "grammar", world: ["w1", "w2", "w3"][i],
+    items: u.items.map(x => ({ c: x.s, label: x.opt, fr: x.fr, kind: "grammar" })) }));
+  const CP_U = { id: "c0", unit: "Mots composés", t: "Kanji combinés", kind: "compound", world: "w3",
+    items: COMPOUNDS.map(x => ({ c: x.c, label: x.m, parts: x.parts, kind: "compound" })) };
+  PATH.push(...HK.slice(0, 8), GR_U[0], VO_U[0], VO_U[1], ...HK.slice(8, 16), GR_U[1],
+    VO_U[2], VO_U[3], VO_U[4], VO_U[5],
+    HK[16], HK[17], CP_U, HK[18], VO_U[6], GR_U[2], VO_U[7], HK[19], VO_U[8], VO_U[9]);
+  // Réservoirs de questions pour les distracteurs, par type
+  const POOL = {
+    kana: KANA_ITEMS, kanji: KANJI,
+    vocab: VO_U.flatMap(u => u.items),
+    grammar: [...GR_U.flatMap(u => u.items), ...PARTICLES.map(p => ({ c: "", label: p, kind: "grammar" }))],
+    compound: CP_U.items
+  };
+
+  // Mondes : chacun regroupe des unités du chemin
+  const WORLDS = [
+    { id: "w1", name: "Village des cerisiers", sub: "Hiragana", units: [0,1,2,3,4,5,6,7], sky: ["#2A1F4D","#F4A6BC"], hill: "#3E6B4E", accent: "#F4B6C6" },
+    { id: "w2", name: "Port de Yokohama", sub: "Katakana", units: [8,9,10,11,12,13,14,15], sky: ["#0F2A4A","#5FA8D3"], hill: "#274B5C", accent: "#BFE0FF" },
+    { id: "w3", name: "Pied du Fuji", sub: "Kanji", units: [16,17,18,19], sky: ["#1B1638","#C98A4B"], hill: "#3B4A6B", accent: "#E9C46A" },
+    { id: "w4", name: "Temple d'or de Kyoto", sub: "Maîtrise", units: null, sky: ["#2A1606","#8A5A1E"], hill: "#5A3A10", accent: "#FFD873" }
+  ];
+  const EVENTS = {
+    "1-1": ["年", "année", "Le jour de l'an : une nouvelle année commence."],
+    "2-14": ["愛", "amour", "La Saint-Valentin : le kanji de l'amour."],
+    "3-3": ["桃", "pêche", "Hinamatsuri, la fête des filles."],
+    "3-20": ["春", "printemps", "Les cerisiers vont bientôt fleurir."],
+    "6-21": ["夏", "été", "Le solstice d'été, les jours les plus longs."],
+    "7-7": ["星", "étoile", "Tanabata : des vœux accrochés aux bambous."],
+    "10-31": ["夜", "nuit", "Halloween : la nuit et ses fantômes."],
+    "12-22": ["冬", "hiver", "Le solstice d'hiver, la nuit la plus longue."],
+    "12-25": ["松", "pin, sapin", "Noël : au Japon, on décore les portes du Nouvel An de branches de pin."]
+  };
+
+  /* ---------- Boutique ---------- */
+  const SHOP = [
+    { id: "onigiri", ico: "🍙", name: "Onigiri", desc: "+2 cœurs", price: 30, kind: "consum", apply: () => { data.hearts = Math.min(5, data.hearts + 2); } },
+    { id: "recharge", ico: "♥", name: "Recharge complète", desc: "Cœurs au maximum", price: 80, kind: "consum", apply: () => { data.hearts = 5; } },
+    { id: "neko", ico: "🐱", name: "Maneki-neko", desc: "Protège votre série un jour de retard (2 max)", price: 50, kind: "consum", apply: () => { data.streak.freeze = Math.min(2, data.streak.freeze + 1); } },
+    { id: "boostxp", ico: "🎋", name: "Booster XP ×2", desc: "Double XP pendant 30 min", price: 60, kind: "boost", key: "xp", dur: 30 * 60e3 },
+    { id: "boostk", ico: "🎐", name: "Booster koban ×2", desc: "Double koban pendant 1 h", price: 70, kind: "boost", key: "koban", dur: 60 * 60e3 },
+    { id: "erable", ico: "🍁", name: "Pétales d'érable", desc: "Remplace les pétales de cerisier", price: 150, kind: "cosmetic", slot: "petal", value: "erable" },
+    { id: "or", ico: "🏯", name: "Aube dorée", desc: "Thème doré, pour votre fond d'écran", price: 220, kind: "cosmetic", slot: "theme", value: "or" }
+  ];
+
+  /* ---------- État ---------- */
+  const KEY = "kana-kotoba-v4", HEART_MS = 30 * 60e3, MAX_HEARTS = 5;
+  const DEF = { xp: 0, koban: 20, hearts: 5, heartTs: Date.now(), streak: { n: 0, last: null, freeze: 0 },
+    done: {}, tot: { a: 0, c: 0 }, wstat: {}, sound: true, boost: { xp: 0, koban: 0 },
+    owned: { sakura: true }, equip: { petal: "sakura", theme: "nuit" }, bonus: {},
+    level: 1, recent: [], istat: {}, tier: 0, weekId: null, weekXp: 0, pendingClose: null, lastResult: null };
+  const BG_THEMES = {
+    sakura: { sky: ["#0C1026", "#1E2748", "#3A3F6E"], sun: "#FFF6E2", hill: ["#1A2140", "#0F1530"], shape: "mount", fx: "petal" },
+    ink: { sky: ["#0A0A0E", "#16161D", "#262630"], sun: "#CFC9BA", hill: ["#15151B", "#08080B"], shape: "hills", fx: "none" },
+    gold: { sky: ["#1A1206", "#3A2A10", "#6B4A1A"], sun: "#FFD873", hill: ["#2A1C08", "#140D04"], shape: "mount", fx: "spark" },
+    dusk: { sky: ["#1B1036", "#3B1F5C", "#6A3A7A"], sun: "#FFB38A", hill: ["#2A1447", "#150A24"], shape: "hills", fx: "spark" },
+    colors: { sky: ["#0F1B2E", "#2A2350", "#4B2A6B"], sun: "#FFD1F0", hill: ["#1A1A3A", "#0E0E26"], shape: "hills", fx: "firefly", hue: true },
+    body: { sky: ["#2A0F1E", "#4A1E2E", "#7A3340"], sun: "#FFB7A0", hill: ["#2A1220", "#15090F"], shape: "hills", fx: "petal" },
+    family: { sky: ["#3A1E2E", "#8A4A3A", "#E08A5A"], sun: "#FFD27A", hill: ["#4A2A2A", "#2A1414"], shape: "hills", fx: "leaf" },
+    animals: { sky: ["#0B2A22", "#154A3A", "#2A6A52"], sun: "#E9F7C9", hill: ["#0B2418", "#06150D"], shape: "forest", fx: "firefly" },
+    food: { sky: ["#2A1A0C", "#5A3A1C", "#A86A36"], sun: "#FFE0A0", hill: ["#3A2410", "#1E1208"], shape: "hills", fx: "steam" },
+    time: { sky: ["#1E2A4A", "#4A5A8A", "#F2A98A"], sun: "#FFE7B3", hill: ["#2A3050", "#141828"], shape: "mount", fx: "none" },
+    transport: { sky: ["#050814", "#0E1A33", "#1B2A52"], sun: "#9FD8FF", hill: ["#0B1224", "#05070F"], shape: "city", fx: "streak" },
+    house: { sky: ["#1A0F08", "#2E1B10", "#4A2C18"], sun: "#FFB45A", hill: ["#20120A", "#0E0704"], shape: "city", fx: "firefly" },
+    weather: { sky: ["#0B1220", "#1C2A3E", "#33465E"], sun: "#B9C6D6", hill: ["#1A2433", "#0C121C"], shape: "hills", fx: "rain" }
+  };
+  // Unités de vocabulaire v0..v9 : famille, animaux, nourriture, temps, couleurs, corps, transports, maison, météo, verbes
+  const VOCAB_BG = ["family", "animals", "food", "time", "colors", "body", "transport", "house", "weather", "ink"];
+  const KIND_BG = { kana: "sakura", grammar: "ink", kanji: "gold", compound: "dusk" };
+  let BG = { key: null };
+  let FX = { kind: "none", ps: [] };
+  let ACCT = null;
+  let data = JSON.parse(JSON.stringify(DEF));
+  function save() { if (!ACCT) return; ACCT.progress = data; persistAccounts(); }
+
+  function regen() {
+    const now = Date.now();
+    if (data.hearts >= MAX_HEARTS) { data.heartTs = now; return; }
+    while (data.hearts < MAX_HEARTS && now - data.heartTs >= HEART_MS) { data.hearts++; data.heartTs += HEART_MS; }
+    if (data.hearts >= MAX_HEARTS) data.heartTs = now;
+  }
+
+  /* ---------- Utilitaires ---------- */
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+  const dayKey = d => { const z = new Date(d); return z.getFullYear() + "-" + (z.getMonth() + 1) + "-" + z.getDate(); };
+  const boostOn = k => data.boost[k] > Date.now();
+  function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2700); }
+
+  /* ---------- Sons ---------- */
+  let ac = null;
+  function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } return ac; }
+  function tone(f, d, type = "sine", v = 0.15, t = 0, slide = null) {
+    if (!data.sound) return; const c = audio(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain(), now = c.currentTime + t;
+    o.type = type; o.frequency.setValueAtTime(f, now);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, now + d);
+    g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(v, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + d);
+    o.connect(g).connect(c.destination); o.start(now); o.stop(now + d + 0.02);
+  }
+  function sfx(name) {
+    if (!data.sound) return;
+    if (name === "ok") { tone(523, .12, "triangle", .2); tone(659, .12, "triangle", .2, .08); tone(784, .22, "triangle", .2, .16); }
+    if (name === "ko") tone(220, .32, "sawtooth", .12, 0, 110);
+    if (name === "tap") tone(900, .04, "square", .04);
+    if (name === "buy") { tone(880, .1, "triangle", .15); tone(1320, .18, "triangle", .15, .09); }
+    if (name === "whoosh") {
+      const c = audio(); if (!c) return;
+      const len = c.sampleRate * .8, buf = c.createBuffer(1, len, c.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      src.buffer = buf; f.type = "bandpass"; f.frequency.setValueAtTime(400, c.currentTime);
+      f.frequency.exponentialRampToValueAtTime(3000, c.currentTime + .7); g.gain.value = .25;
+      src.connect(f).connect(g).connect(c.destination); src.start();
+    }
+    if (name === "fanfare") [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, .25, "triangle", .2, i * .11));
+  }
+  $("#mute").addEventListener("click", () => { data.sound = !data.sound; save(); renderTop(); if (data.sound) sfx("tap"); });
+
+  /* ---------- Pétales ---------- */
+  const cv = $("#petals"), cx = cv.getContext("2d");
+  let W, H, petals = [];
+  function resize() { W = cv.width = innerWidth * devicePixelRatio; H = cv.height = innerHeight * devicePixelRatio; }
+  function petalColor(sw) {
+    return data.equip.petal === "erable" ? `rgba(${222 + Math.sin(sw) * 8}, ${110 + Math.cos(sw) * 12}, 60, .85)`
+      : `rgba(${246 + Math.sin(sw) * 6}, ${178 + Math.cos(sw) * 10}, 200, .8)`;
+  }
+  function mkPetal(init) {
+    return { x: Math.random() * W, y: init ? Math.random() * H : -20, s: (4 + Math.random() * 6) * devicePixelRatio,
+      vy: (.6 + Math.random() * 1.1) * devicePixelRatio, sw: Math.random() * 6.28, sv: .01 + Math.random() * .02,
+      r: Math.random() * 6, vr: (Math.random() - .5) * .05, flip: Math.random() * 6 };
+  }
+  function petalLoop() {
+    cx.clearRect(0, 0, W, H);
+    petals.forEach(p => {
+      p.sw += p.sv; p.x += Math.sin(p.sw) * .9 * devicePixelRatio; p.y += p.vy; p.r += p.vr; p.flip += .03;
+      if (p.y > H + 30) Object.assign(p, mkPetal(false));
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.scale(Math.cos(p.flip) * .6 + .4, 1);
+      cx.beginPath(); cx.moveTo(0, -p.s); cx.bezierCurveTo(p.s * .9, -p.s * .6, p.s * .9, p.s * .6, 0, p.s);
+      cx.bezierCurveTo(-p.s * .9, p.s * .6, -p.s * .9, -p.s * .6, 0, -p.s);
+      cx.fillStyle = petalColor(p.sw); cx.fill(); cx.restore();
+    });
+    requestAnimationFrame(petalLoop);
+  }
+  resize(); addEventListener("resize", resize);
+  petals = Array.from({ length: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 42 }, () => mkPetal(true));
+  if (petals.length) petalLoop();
+
+  /* ---------- Verdicts ---------- */
+  const THUMB = "M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z";
+  function verdict(ok) {
+    const v = document.createElement("div");
+    v.className = "verdict " + (ok ? "ok" : "ko"); v.setAttribute("aria-hidden", "true");
+    v.innerHTML = `<div class="ring"></div><div class="thumb"><svg viewBox="0 0 24 24"><path d="${THUMB}"/></svg></div>`;
+    for (let i = 0; i < 22; i++) {
+      const p = document.createElement("i"); p.className = "p";
+      const a = i / 22 * Math.PI * 2, d = 160 + Math.random() * 120;
+      p.style.setProperty("--dx", Math.cos(a) * d + "px"); p.style.setProperty("--dy", Math.sin(a) * d + "px");
+      p.style.animationDelay = Math.random() * .1 + "s"; v.appendChild(p);
+    }
+    document.body.appendChild(v); setTimeout(() => v.remove(), 1400);
+  }
+
+  /* ---------- Scènes aléatoires ---------- */
+  function el(cls) { const d = document.createElement("div"); d.className = cls; document.body.appendChild(d); return d; }
+  const SCENES = [
+    () => { const s = el("scene");
+      for (let i = 0; i < 38; i++) { const p = el("petal"); s.appendChild(p); const a = Math.random() * 6.28, d = 120 + Math.random() * 40;
+        p.style.setProperty("--dx", Math.cos(a) * d + "vmin"); p.style.setProperty("--dy", Math.sin(a) * d + "vmin");
+        p.style.setProperty("--r", rnd(-540, 540) + "deg"); p.style.animationDelay = Math.random() * .25 + "s"; }
+      sfx("whoosh"); return 2400; },
+    () => { const s = el("scene");
+      s.innerHTML = `<svg class="koi" viewBox="0 0 200 90" aria-hidden="true"><path d="M30 45 C60 10 130 10 160 45 C130 80 60 80 30 45Z" fill="#F08A3C"/><path d="M70 30 C90 22 115 24 130 38" stroke="#FFF4E0" stroke-width="10" fill="none" stroke-linecap="round" opacity=".9"/><path class="tail" d="M160 45 L195 22 L185 45 L195 68Z" fill="#F7B267"/><circle cx="50" cy="40" r="4" fill="#1A1A1A"/></svg>`;
+      sfx("whoosh"); return 2700; },
+    () => { const c = document.createElement("canvas"); c.id = "hanabi"; document.body.appendChild(c);
+      c.width = innerWidth; c.height = innerHeight; const x = c.getContext("2d");
+      const ps = [], cols = ["#F4B6C6", "#E9C46A", "#FFFFFF", "#E4553B", "#9EC9FF"];
+      const burst = (bx, by) => { const col = cols[rnd(0, cols.length - 1)];
+        for (let i = 0; i < 60; i++) { const a = Math.random() * 6.28, v = 2 + Math.random() * 4; ps.push({ x: bx, y: by, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, col }); } };
+      [[.3, .3], [.7, .25], [.5, .45]].forEach(([fx, fy], i) => setTimeout(() => { burst(c.width * fx, c.height * fy); tone(180 + i * 40, .5, "triangle", .08, 0, 90); }, i * 550));
+      const t0 = performance.now();
+      (function frame(now) {
+        x.fillStyle = "rgba(0,0,0,.15)"; x.globalCompositeOperation = "destination-out"; x.fillRect(0, 0, c.width, c.height);
+        x.globalCompositeOperation = "source-over";
+        ps.forEach(p => { p.vy += .06; p.x += p.vx; p.y += p.vy; p.vx *= .98; p.life -= .018;
+          x.globalAlpha = Math.max(p.life, 0); x.fillStyle = p.col; x.beginPath(); x.arc(p.x, p.y, 2.2, 0, 6.28); x.fill(); });
+        x.globalAlpha = 1;
+        if (now - t0 < 2300) requestAnimationFrame(frame); else c.remove();
+      })(t0);
+      return 0; },
+    () => { const s = el("scene");
+      for (let i = 0; i < 6; i++) { const l = document.createElement("div"); l.className = "lant";
+        l.style.left = rnd(5, 88) + "%"; l.style.animationDelay = Math.random() * .8 + "s"; l.style.animationDuration = (2 + Math.random() * 1.2) + "s";
+        l.innerHTML = `<svg viewBox="0 0 46 60"><rect x="12" y="2" width="22" height="5" fill="#E9C46A"/><ellipse cx="23" cy="30" rx="20" ry="25" fill="#E4553B"/><rect x="12" y="54" width="22" height="5" fill="#E9C46A"/><path d="M23 6 V54" stroke="#F7C6A8" stroke-width="1.5" opacity=".6"/></svg>`;
+        s.appendChild(l); }
+      sfx("whoosh"); return 2800; },
+    () => { const s = el("scene");
+      s.innerHTML = `<svg class="enso" viewBox="0 0 200 200" aria-hidden="true"><path d="M100 22 A78 78 0 1 1 30 62"/></svg>`;
+      sfx("tap"); tone(330, .9, "sine", .08, 0, 660); return 2400; }
+  ];
+  function randomScene() {
+    const life = SCENES[rnd(0, SCENES.length - 1)]() || 2500;
+    setTimeout(() => $$(".scene, .enso").forEach(n => n.remove()), life);
+  }
+
+  /* ---------- Mondes : stade d'évolution ---------- */
+  function worldUnits(w) { return PATH.filter(u => u.world === w.id); }
+  function worldStage(w) {
+    if (w.id === "w4") {
+      const st = WORLDS.slice(0, 3).map(worldStage);
+      if (st.some(s => s < 3)) return 0;
+      return st.every(s => s >= 4) ? 4 : 3;
+    }
+    const us = worldUnits(w), total = us.length, done = us.filter(u => data.done[u.id] !== undefined).length;
+    if (!done) return 0;
+    if (done < total) return done / total >= .5 ? 2 : 1;
+    const stars = us.map(u => data.done[u.id]), avg = stars.reduce((a, b) => a + b, 0) / total;
+    const ws = data.wstat[w.id] || { a: 0, c: 0 }, acc = ws.a ? ws.c / ws.a : 0;
+    return avg >= 2.5 && acc >= .8 ? 4 : 3;
+  }
+  function worldProgress(w) {
+    if (w.id === "w4") return worldStage(w) / 4 * 100;
+    const us = worldUnits(w); return us.filter(u => data.done[u.id] !== undefined).length / us.length * 100;
+  }
+  function worldSVG(w, st) {
+    const id = w.id, sky = st === 0 ? ["#1A1D2E", "#2A2E44"] : w.sky;
+    let s = `<svg viewBox="0 0 320 180" aria-hidden="true"><defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
+      <rect width="320" height="180" fill="url(#g${id})"/>
+      <circle cx="262" cy="46" r="${st >= 3 ? 20 : 15}" fill="${w.accent}" opacity="${st ? .95 : .3}"/>`;
+    if (st >= 4) s += `<circle cx="262" cy="46" r="38" fill="${w.accent}" opacity=".16"/>`;
+    if (id === "w3") {
+      s += `<path d="M20 140 L120 42 L220 140Z" fill="#2B3350"/>`;
+      if (st >= 2) s += `<path d="M96 62 L120 42 L144 62 L134 58 L120 68 L106 58Z" fill="#fff" opacity="${st >= 3 ? .95 : .6}"/>`;
+      if (st >= 2) s += `<path d="M150 140 L210 70 L280 140Z" fill="#323C5E"/>`;
+    }
+    s += `<path d="M0 140 Q80 110 160 135 T320 130 V180 H0Z" fill="${w.hill}"/>`;
+    if (id === "w1") {
+      for (let i = 0; i < st + 1; i++) s += `<polygon points="${40 + i * 40},${118} ${56 + i * 40},${100} ${72 + i * 40},${118}" fill="#7A4A3A"/><rect x="${43 + i * 40}" y="118" width="26" height="18" fill="#C9A27A"/>`;
+      for (let i = 0; i < st * 2; i++) s += `<circle cx="${20 + i * 26}" cy="${96 + (i % 2) * 8}" r="${9 + (i % 3)}" fill="#F4B6C6" opacity=".9"/><rect x="${19 + i * 26}" y="${104 + (i % 2) * 8}" width="3" height="16" fill="#5A3A2A"/>`;
+      if (st >= 3) for (let i = 0; i < 3; i++) s += `<line x1="${60 + i * 80}" y1="60" x2="${60 + i * 80}" y2="80" stroke="#E9C46A"/><ellipse cx="${60 + i * 80}" cy="88" rx="7" ry="9" fill="#E4553B" opacity=".9"/>`;
+      if (st >= 4) for (let i = 0; i < 8; i++) s += `<circle class="ff" style="animation-delay:${i * .4}s" cx="${30 + i * 36}" cy="${70 + (i % 3) * 14}" r="2" fill="#FFE9A0"/>`;
+    }
+    if (id === "w2") {
+      s += `<path d="M0 150 Q160 140 320 150 V180 H0Z" fill="#1B3D52"/>`;
+      if (st >= 1) s += `<path d="M60 128 L120 128 L110 140 L70 140Z" fill="#B0463A"/><rect x="88" y="104" width="4" height="24" fill="#E9E4D8"/><polygon points="92,106 92,122 120,122" fill="#F5EFE2"/>`;
+      if (st >= 2) s += `<path d="M180 132 L240 132 L232 142 L188 142Z" fill="#E9E4D8"/><rect x="204" y="112" width="3" height="20" fill="#5A6B7A"/>`;
+      for (let i = 0; i < st * 2; i++) s += `<line x1="${20 + i * 40}" y1="112" x2="${20 + i * 40}" y2="150" stroke="#1A2636" stroke-width="3"/><circle cx="${20 + i * 40}" cy="110" r="4" fill="#FFE9A0" opacity="${st >= 3 ? 1 : .6}"/>`;
+      if (st >= 3) s += `<rect x="0" y="150" width="320" height="2" fill="#BFE0FF" opacity=".4"/>`;
+      if (st >= 4) s += `<rect x="60" y="150" width="200" height="14" fill="#E9C46A" opacity=".25"/>`;
+    }
+    if (id === "w3") {
+      if (st >= 2) s += `<rect x="236" y="108" width="50" height="6" fill="#B0463A"/><rect x="246" y="92" width="30" height="6" fill="#B0463A"/><rect x="250" y="114" width="4" height="26" fill="#B0463A"/><rect x="276" y="114" width="4" height="26" fill="#B0463A"/>`;
+      if (st >= 3) for (let i = 0; i < 7; i++) s += `<circle cx="${20 + i * 44}" cy="${20 + (i % 3) * 10}" r="1.4" fill="#FFF" opacity=".8"/>`;
+      if (st >= 4) for (let i = 0; i < 6; i++) s += `<circle class="ff" style="animation-delay:${i * .6}s" cx="${40 + i * 45}" cy="${120 + (i % 2) * 10}" r="2" fill="#FFD873"/>`;
+    }
+    if (id === "w4") {
+      const gold = st >= 4 ? "#FFD873" : st >= 3 ? "#D9A441" : "#8A5A1E";
+      s += `<rect x="110" y="96" width="100" height="44" fill="#6B4A1A"/><path d="M96 96 Q160 60 224 96Z" fill="${gold}"/><path d="M104 96 L160 46 L216 96Z" fill="${gold}" opacity=".9"/><rect x="150" y="120" width="20" height="20" fill="#2A1606"/>`;
+      if (st >= 4) for (let i = 0; i < 8; i++) s += `<circle class="ff" style="animation-delay:${i * .5}s" cx="${30 + i * 36}" cy="${40 + (i % 3) * 20}" r="2.2" fill="#FFF3C4"/>`;
+    }
+    if (st === 0) s += `<text x="160" y="96" text-anchor="middle" font-size="15" fill="#9AA3C7" font-family="sans-serif">Verrouillé</text>`;
+    return s + "</svg>";
+  }
+  function renderWorlds() {
+    const box = $("#worlds"); box.innerHTML = "";
+    WORLDS.forEach(w => {
+      const st = worldStage(w), pr = worldProgress(w);
+      const card = document.createElement("div");
+      card.className = "world" + (st === 0 ? " locked" : "");
+      const need = w.id === "w4" ? "Atteignez le niveau 3 dans les trois premiers mondes." : null;
+      card.innerHTML = `${worldSVG(w, st)}<div class="info">
+        <h3>${w.name} <small>${st === 0 ? (need || "À débloquer") : "Niveau " + st + " / 4"}</small></h3>
+        <p class="muted" style="margin:2px 0 0">${w.sub}</p>
+        <div class="bar"><i style="width:${pr}%"></i></div>
+        <p class="muted" style="margin:0">${st >= 4 ? "Monde entièrement éclairé" : st === 0 && need ? "Débloqué quand les trois premiers mondes atteignent le niveau 3." : "Avancez dans les leçons pour faire grandir ce monde."}</p>
+      </div>`;
+      box.appendChild(card);
+    });
+  }
+  function renderProfile() {
+    const acc = data.tot.a ? Math.round(data.tot.c / data.tot.a * 100) : 0;
+    $("#profile").innerHTML = `
+      <div><strong>${Object.keys(data.done).length}</strong><span>leçons</span></div>
+      <div><strong>${acc} %</strong><span>de bonnes réponses</span></div>
+      <div><strong>${data.xp}</strong><span>XP totaux</span></div>`;
+  }
+
+  /* ---------- Boutique ---------- */
+  function renderShop() {
+    const box = $("#shop"); box.innerHTML = "";
+    SHOP.forEach(it => {
+      const div = document.createElement("div"); div.className = "item";
+      let btn;
+      if (it.kind === "cosmetic") {
+        const owned = data.owned[it.value];
+        const equipped = data.equip[it.slot] === it.value;
+        btn = owned
+          ? `<button class="buy owned" data-id="${it.id}">${equipped ? "Équipé ✓" : "Équiper"}</button>`
+          : `<button class="buy" data-id="${it.id}" ${data.koban < it.price ? "disabled" : ""}>◆ ${it.price}</button>`;
+      } else {
+        btn = `<button class="buy" data-id="${it.id}" ${data.koban < it.price ? "disabled" : ""}>◆ ${it.price}</button>`;
+      }
+      div.innerHTML = `<div class="ico">${it.ico}</div><h4>${it.name}</h4><p>${it.desc}</p>${btn}`;
+      box.appendChild(div);
+    });
+    box.querySelectorAll("button.buy").forEach(b => b.addEventListener("click", () => buy(b.dataset.id)));
+    const ab = $("#activeBoosts"); ab.innerHTML = "";
+    ["xp", "koban"].forEach(k => {
+      if (boostOn(k)) {
+        const left = Math.ceil((data.boost[k] - Date.now()) / 60e3);
+        const d = document.createElement("div"); d.className = "chip";
+        d.textContent = `${k === "xp" ? "🎋 Booster XP" : "🎐 Booster koban"} actif : ${left} min`;
+        ab.appendChild(d);
+      }
+    });
+    if (data.streak.freeze) { const d = document.createElement("div"); d.className = "chip"; d.textContent = `🐱 Protection de série : ${data.streak.freeze}`; ab.appendChild(d); }
+  }
+  function buy(id) {
+    const it = SHOP.find(x => x.id === id);
+    if (it.kind === "cosmetic") {
+      if (!data.owned[it.value]) { if (data.koban < it.price) return toast("Koban insuffisants"); data.koban -= it.price; data.owned[it.value] = true; }
+      data.equip[it.slot] = data.equip[it.slot] === it.value ? (it.slot === "petal" ? "sakura" : "nuit") : it.value;
+      if (it.slot === "theme") document.body.classList.toggle("theme-or", data.equip.theme === "or");
+      sfx("buy"); toast(data.equip[it.slot] === it.value ? `${it.name} équipé` : `${it.name} retiré`);
+    } else {
+      if (data.koban < it.price) return toast("Koban insuffisants");
+      if (it.kind === "boost") { data.boost[it.key] = Math.max(Date.now(), data.boost[it.key]) + it.dur; }
+      else {
+        if (it.id === "onigiri" || it.id === "recharge") { regen(); if (data.hearts >= MAX_HEARTS) return toast("Vos cœurs sont déjà au maximum"); }
+        if (it.id === "neko" && data.streak.freeze >= 2) return toast("Vous avez déjà 2 protections");
+        it.apply();
+      }
+      data.koban -= it.price; sfx("buy"); toast(`${it.name} acheté`);
+    }
+    save(); refresh();
+  }
+
+  /* ---------- Chemin ---------- */
+  function renderPath() {
+    const p = $("#path"); p.innerHTML = "";
+    const firstOpen = PATH.findIndex(u => data.done[u.id] === undefined);
+    let lastUnit = "";
+    PATH.forEach((u, i) => {
+      if (u.unit !== lastUnit) { lastUnit = u.unit; const h = document.createElement("div"); h.className = "unit-title"; h.textContent = u.unit.toUpperCase(); p.appendChild(h); }
+      const locked = firstOpen !== -1 && i > firstOpen;
+      const done = data.done[u.id] !== undefined, cur = i === firstOpen;
+      const off = Math.round(Math.sin(i * 1.1) * 62);
+      const wrap = document.createElement("div"); wrap.className = "wrapnode"; wrap.style.transform = `translateX(${off}px)`;
+      const b = document.createElement("button");
+      b.className = "node " + (locked ? "locked" : done ? "done" : "") + (cur ? " current" : "");
+      b.textContent = [...(u.items[0].c || "")].find(ch => /[\u3040-\u30ff\u4e00-\u9faf]/.test(ch)) || "?"; b.disabled = locked;
+      b.setAttribute("aria-label", `${u.unit} ${u.t}${locked ? ", verrouillé" : ""}`);
+      b.addEventListener("click", () => startLesson(i));
+      const st = document.createElement("div"); st.className = "stars";
+      st.textContent = done ? "★".repeat(data.done[u.id]) + "☆".repeat(3 - data.done[u.id]) : "";
+      const lb = document.createElement("div"); lb.className = "label"; lb.textContent = u.t;
+      wrap.append(b, st, lb); p.appendChild(wrap);
+    });
+    setBgFor(PATH.find(u => data.done[u.id] === undefined) || PATH[0]);
+  }
+  function renderToday() {
+    const now = new Date(), ev = EVENTS[(now.getMonth() + 1) + "-" + now.getDate()];
+    let c, m, note;
+    if (ev) [c, m, note] = ev;
+    else { const i = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5) % KANJI.length; c = KANJI[i].c; m = KANJI[i].m; note = "Kanji du jour"; }
+    $("#today").innerHTML = `<div class="kj">${c}</div><div><div class="r">${m}</div><small class="muted">${note}</small></div>`;
+  }
+
+  /* ---------- Barre du haut ---------- */
+  function renderTop() {
+    regen();
+    $("#streak").textContent = data.streak.n;
+    $("#hearts").textContent = data.hearts + "/" + MAX_HEARTS;
+    const left = data.hearts < MAX_HEARTS ? Math.max(0, data.heartTs + HEART_MS - Date.now()) : 0;
+    $("#heartTimer").textContent = left ? Math.floor(left / 60e3) + ":" + String(Math.floor(left / 1e3) % 60).padStart(2, "0") : "";
+    $("#koban").textContent = data.koban;
+    $("#mute").textContent = "♪"; $("#mute").style.opacity = data.sound ? 1 : .4;
+    $("#lhearts").textContent = "♥ " + data.hearts;
+  }
+
+  /* ---------- Navigation ---------- */
+  function showView(name) {
+    $$(".view").forEach(v => v.hidden = v.id !== "v-" + name);
+    $$("nav.bottom button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === name));
+    if (name === "mondes") { renderWorlds(); renderProfile(); }
+    if (name === "boutique") renderShop();
+    if (name === "ligue") renderLeague();
+    if (name === "chemin") { renderPath(); renderToday(); }
+    window.scrollTo(0, 0);
+  }
+  $$("nav.bottom button").forEach(b => b.addEventListener("click", () => { sfx("tap"); showView(b.dataset.view); }));
+
+  /* ---------- Leçon ---------- */
+  let L = null;
+  function startLesson(i) {
+    regen();
+    if (data.hearts <= 0) { toast("Plus de cœurs : attendez ou visitez la boutique"); showView("boutique"); return; }
+    sfx("tap");
+    const unit = PATH[i];
+    setBgFor(unit);
+    const pool = POOL[unit.items[0].kind];
+    const queue = weightedPick(unit.items, 10);
+    L = { i, unit, pool, queue, idx: 0, busy: false, mistakes: 0, countdown: rnd(3, 6), opts: [], right: 0 };
+    showIntro(unit);
+  }
+  function ask() {
+    const it = L.queue[L.idx];
+    const base = data.level >= 4 && L.unit.items.length > 4 ? L.unit.items : L.pool;
+    const distract = shuffle(base.filter(x => x.label !== it.label && x.c !== it.c)).slice(0, optCount() - 1);
+    const opts = shuffle([it, ...distract].map(x => ({ label: x.label, ok: x === it })));
+    L.opts = opts;
+    $("#progBar").style.width = (L.idx / L.queue.length * 100) + "%";
+    $("#lhearts").textContent = "♥ " + data.hearts;
+    const isKana = it.kind === "kana";
+    $("#lessonBody").innerHTML = `
+      <div class="qtitle">${QTITLE[it.kind]} <span class="lvl">Niv. ${data.level}</span></div>
+      <div class="qprompt" style="${it.c.length > 6 ? "font-size:clamp(1.8rem,7vw,2.8rem);line-height:1.5" : ""}">${it.c}</div>${it.parts ? `<p class="muted" style="text-align:center;margin:-8px 0 12px;font-size:14px">${esc(it.parts)}</p>` : ""}
+      <div class="opts">${opts.map((o, k) => `<button class="opt" data-k="${k}"><kbd>${k + 1}</kbd>${o.label}</button>`).join("")}</div>
+      <div class="feedback" id="fb" aria-live="polite"></div>`;
+    L.busy = false;
+    $$(".opt").forEach(b => b.addEventListener("click", () => choose(b)));
+  }
+  document.addEventListener("keydown", e => {
+    if ($("#lesson").hidden || !L || L.busy) return;
+    const b = document.querySelector(`.opt[data-k="${Number(e.key) - 1}"]`);
+    if (b) choose(b);
+  });
+  function choose(btn) {
+    if (!L || L.busy) return; L.busy = true;
+    const o = L.opts[Number(btn.dataset.k)], ok = o.ok, it = L.queue[L.idx];
+    $$(".opt").forEach(b => b.disabled = true);
+    btn.classList.add(ok ? "right" : "wrong");
+    if (!ok) $$(".opt").forEach(b => { if (L.opts[+b.dataset.k].ok) b.classList.add("right"); });
+    data.tot.a++; if (ok) data.tot.c++;
+    recordItem(it, ok); if (ok) L.right++;
+    const world = WORLDS.find(w => w.id === L.unit.world);
+    if (world) { const ws = data.wstat[world.id] || { a: 0, c: 0 }; data.wstat[world.id] = { a: ws.a + 1, c: ws.c + (ok ? 1 : 0) }; }
+    const fb = $("#fb");
+    if (ok) { fb.className = "feedback ok"; fb.textContent = ["Excellent !", "Très bien !", "Parfait !", "Bien joué !"][rnd(0, 3)]; sfx("ok"); }
+    else {
+      data.hearts = Math.max(0, data.hearts - 1); L.mistakes++; regen();
+      fb.className = "feedback ko";
+      fb.innerHTML = `Pas tout à fait. <small>${explain(it)}</small>`;
+      sfx("ko");
+    }
+    save(); verdict(ok);
+    L.countdown--;
+    if (L.countdown <= 0) { L.countdown = rnd(3, 6); setTimeout(randomScene, 1000); }
+    setTimeout(() => {
+      if (!L) return;
+      if (data.hearts <= 0) return lose();
+      L.idx++;
+      if (L.idx >= L.queue.length) return finish();
+      ask();
+    }, ok ? 1500 : 2400);
+  }
+  function lose() {
+    save(); renderTop();
+    $("#lessonBody").innerHTML = `
+      <div class="done-screen">
+        <div class="big" style="color:var(--ko)">Plus de cœurs</div>
+        <p class="muted">Les cœurs reviennent avec le temps (1 toutes les 30 min), ou grâce à un onigiri.</p>
+        <button class="btn-main" id="toShop">Ouvrir la boutique</button>
+        <button class="close" id="back">Retour au chemin</button>
+      </div>`;
+    $("#toShop").onclick = () => { closeLesson(); showView("boutique"); };
+    $("#back").onclick = closeLesson;
+  }
+  function finish() {
+    const N = L.queue.length, stars = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
+    const before = WORLDS.map(worldStage);
+    data.done[L.unit.id] = Math.max(data.done[L.unit.id] || 0, stars);
+    const perf = Math.max(.4, Math.min(1, .4 + .6 * (.5 * (L.right / N) + .5 * recentAcc())));
+    const xp = Math.round((10 + stars * 5) * perf * (boostOn("xp") ? 2 : 1));
+    const koban = (5 + stars * 5) * (boostOn("koban") ? 2 : 1);
+    rollWeek(); data.xp += xp; data.weekXp = (data.weekXp || 0) + xp; data.koban += koban; syncLeague();
+    const today = dayKey(new Date());
+    if (data.streak.last !== today) {
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      if (data.streak.last === null) data.streak.n = 1;
+      else if (data.streak.last === dayKey(y)) data.streak.n++;
+      else if (data.streak.freeze > 0) { data.streak.freeze--; data.streak.n++; }
+      else data.streak.n = 1;
+      data.streak.last = today;
+    }
+    const bonus = [];
+    WORLDS.forEach((w, k) => {
+      const st = worldStage(w);
+      if (st >= 4 && before[k] < 4 && !data.bonus[w.id]) { data.bonus[w.id] = true; data.koban += 50; bonus.push(w.name); }
+    });
+    save(); sfx("fanfare"); randomScene();
+    $("#progBar").style.width = "100%";
+    $("#lessonBody").innerHTML = `
+      <div class="done-screen">
+        <div class="big">Leçon terminée</div>
+        <div style="font-size:30px;color:var(--gold);letter-spacing:4px">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div>
+        <div class="xp">+${xp} XP · +${koban} ◆ · série de ${data.streak.n} jour${data.streak.n > 1 ? "s" : ""}</div>
+        ${bonus.length ? `<p style="color:var(--gold)">Monde achevé : ${bonus.join(", ")} (+50 ◆ bonus)</p>` : ""}
+        <p class="muted">Gains ajustés à ${Math.round(perf * 100)} % selon vos résultats récents.</p>
+        <p class="muted">${L.mistakes ? L.mistakes + " erreur" + (L.mistakes > 1 ? "s" : "") + " sur " + N : "Sans aucune erreur !"}</p>
+        <button class="btn-main" id="next">Continuer</button>
+      </div>`;
+    $("#next").onclick = closeLesson;
+  }
+  function closeLesson() { $("#lesson").hidden = true; L = null; refresh(); }
+  $("#quit").addEventListener("click", closeLesson);
+
+  /* ---------- Réinitialisation ---------- */
+  $("#reset").addEventListener("click", () => {
+    if (!confirm("Effacer toute votre progression, vos koban et vos achats ?")) return;
+    Object.keys(DEF).forEach(k => data[k] = JSON.parse(JSON.stringify(DEF[k])));
+    data.heartTs = Date.now(); document.body.classList.remove("theme-or");
+    save(); refresh(); showView("chemin");
+  });
+
+  function refresh() { renderTop(); renderPath(); renderToday(); }
+  refresh();
+
+  setInterval(() => { renderTop(); }, 1000);
+  setTimeout(() => toast("Commencez par la première leçon en haut du chemin"), 600);
+  /* ===== Comptes locaux, 2FA, avatar, réglages, ligue ===== */
+  const ACC_KEY = "kk-accounts", SESS_KEY = "kk-session";
+  const AV_EMOJI = ["🌸", "🐱", "🦊", "🐉", "🍙", "🗾", "🎋", "🍵", "🦉", "🐢"];
+  const AV_BG = ["#F4B6C6", "#7FD6FF", "#7BE495", "#E9C46A", "#B8A1FF"];
+  const TIERS = [{ name: "Bronze", min: 0, ico: "🥉" }, { name: "Argent", min: 300, ico: "🥈" }, { name: "Or", min: 1000, ico: "🥇" }, { name: "Saphir", min: 2500, ico: "💎" }, { name: "Rubis", min: 6000, ico: "🏮" }];
+  let accounts = (() => { try { return JSON.parse(localStorage.getItem(ACC_KEY)) || {}; } catch (e) { return {}; } })();
+  let AUTH = { mode: "login", pending: null, codes: null, acc: null }, SETUP = null;
+  const LEAGUE = { mode: "offline", uid: null, db: null, timer: null, rows: [] };
+  function persistAccounts() { try { localStorage.setItem(ACC_KEY, JSON.stringify(accounts)); } catch (e) {} }
+  function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+  /* Cryptographie : PBKDF2 pour les mots de passe, TOTP (RFC 6238) pour la 2FA */
+  const enc = new TextEncoder();
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function derive(secret, salt) {
+    const k = await crypto.subtle.importKey("raw", enc.encode(secret), "PBKDF2", false, ["deriveBits"]);
+    return b64(await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, k, 256));
+  }
+  async function hashSecret(s) { const salt = crypto.getRandomValues(new Uint8Array(16)); return { salt: b64(salt), hash: await derive(s, salt) }; }
+  async function checkSecret(s, rec) { return !!rec && (await derive(s, unb64(rec.salt))) === rec.hash; }
+  const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  function b32encode(bytes) {
+    let bits = ""; for (const b of bytes) bits += b.toString(2).padStart(8, "0");
+    let out = ""; for (let i = 0; i < bits.length; i += 5) out += B32[parseInt(bits.slice(i, i + 5).padEnd(5, "0"), 2)];
+    return out;
+  }
+  function b32decode(s) {
+    let bits = ""; for (const c of s.toUpperCase()) { const v = B32.indexOf(c); if (v >= 0) bits += v.toString(2).padStart(5, "0"); }
+    const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2));
+    return new Uint8Array(out);
+  }
+  async function totpAt(secret, counter) {
+    const key = await crypto.subtle.importKey("raw", b32decode(secret), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+    const buf = new ArrayBuffer(8), dv = new DataView(buf);
+    dv.setUint32(0, Math.floor(counter / 4294967296)); dv.setUint32(4, counter % 4294967296);
+    const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, buf));
+    const o = sig[sig.length - 1] & 15;
+    const n = ((sig[o] & 0x7f) << 24 | sig[o + 1] << 16 | sig[o + 2] << 8 | sig[o + 3]) % 1000000;
+    return String(n).padStart(6, "0");
+  }
+  async function verifyTotp(secret, code) {
+    const c = Math.floor(Date.now() / 30000);
+    for (const d of [-1, 0, 1]) if (await totpAt(secret, c + d) === code) return true;
+    return false;
+  }
+  const CODE_ALPH = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  function newCodes(n = 8) {
+    return Array.from({ length: n }, () => {
+      const r = crypto.getRandomValues(new Uint8Array(8));
+      const s = [...r].map(x => CODE_ALPH[x % CODE_ALPH.length]).join("");
+      return s.slice(0, 4) + "-" + s.slice(4);
+    });
+  }
+  async function sealCodes(codes) {
+    return Promise.all(codes.map(async c => ({ ...(await hashSecret(c.replace("-", ""))), used: false })));
+  }
+  async function takeRecoveryCode(acc, input) {
+    const c = input.replace(/[\s-]/g, "").toUpperCase();
+    for (const r of acc.recovery || []) if (!r.used && await checkSecret(c, r)) { r.used = true; persistAccounts(); return true; }
+    return false;
+  }
+
+  /* Session */
+  function avatarHTML(av, size) {
+    av = av || { emoji: "🌸", bg: "#F4B6C6" };
+    if (av.src) return `<img alt="" src="${av.src}">`;
+    return `<span style="width:100%;height:100%;display:grid;place-items:center;background:${av.bg};font-size:${Math.round(size * .5)}px">${av.emoji}</span>`;
+  }
+  function renderAvatarBtn() { const b = $("#avatarBtn"); b.innerHTML = ACCT ? avatarHTML(ACCT.avatar, 38) : ""; }
+  function applyAccount(acc) {
+    ACCT = acc;
+    data = Object.assign(JSON.parse(JSON.stringify(DEF)), acc.progress || {});
+    data.streak = Object.assign({}, DEF.streak, data.streak); data.boost = Object.assign({}, DEF.boost, data.boost);
+    data.equip = Object.assign({}, DEF.equip, data.equip); data.owned = Object.assign({ sakura: true }, data.owned);
+    acc.progress = data;
+    document.body.classList.toggle("theme-or", data.equip.theme === "or");
+    refresh(); renderAvatarBtn(); syncLeague();
+  }
+  function loginAs(acc) {
+    localStorage.setItem(SESS_KEY, acc.email); AUTH.pending = null;
+    $("#auth").hidden = true; applyAccount(acc);
+    toast("Bienvenue, " + acc.name + " !");
+  }
+  function logout() {
+    ACCT = null; data = JSON.parse(JSON.stringify(DEF));
+    localStorage.removeItem(SESS_KEY); closeMenu(); closeSettings();
+    document.body.classList.remove("theme-or"); renderAvatarBtn(); refresh();
+    showAuth("login");
+  }
+  function bootAuth() {
+    const sid = localStorage.getItem(SESS_KEY);
+    if (sid && accounts[sid]) applyAccount(accounts[sid]); else showAuth("login");
+    connectLeague();
+  }
+  function migrateProgress() {
+    if (Object.keys(accounts).length === 0) { try { const old = JSON.parse(localStorage.getItem("kana-kotoba-v4")); if (old) return old; } catch (e) {} }
+    return JSON.parse(JSON.stringify(DEF));
+  }
+
+  /* Écrans de connexion */
+  function showAuth(mode) { AUTH.mode = mode || "login"; AUTH.pending = null; $("#auth").hidden = false; renderAuth(); }
+  function field(label, name, type = "text", extra = "") {
+    return `<div class="field"><label for="f_${name}">${label}</label><input id="f_${name}" name="${name}" type="${type}" ${extra}></div>`;
+  }
+  function renderAuth() {
+    const A = $("#authBody"), m = AUTH.mode;
+    if (m === "codes") {
+      A.innerHTML = `<h2 style="margin-top:0;font:700 1.3rem var(--display)">Vos codes de secours</h2>
+        <p class="muted" style="font-size:14px">Ils permettent de vous connecter si vous perdez votre appareil 2FA, ou de réinitialiser le mot de passe. Chaque code ne sert qu'une fois. Notez-les maintenant : ils ne seront plus affichés.</p>
+        <div class="codes">${AUTH.codes.map(c => `<span>${c}</span>`).join("")}</div>
+        <button class="pbtn" id="codesOk" type="button">J'ai noté mes codes</button>`;
+      $("#codesOk").onclick = () => { AUTH.codes = null; loginAs(AUTH.acc); };
+      return;
+    }
+    const tabs = m === "reset" ? `<div class="tabsm"><button data-m="login" aria-selected="false">Retour à la connexion</button></div>`
+      : `<div class="tabsm"><button data-m="login" aria-selected="${m === "login"}">Connexion</button><button data-m="signup" aria-selected="${m === "signup"}">Créer un compte</button></div>`;
+    let form = "";
+    if (m === "login" && !AUTH.pending) form = field("Adresse e-mail", "email", "email", "required autocomplete=\"email\"") + field("Mot de passe", "pw", "password", "required autocomplete=\"current-password\"")
+      + `<p class="err" id="err"></p><button class="pbtn" type="submit">Se connecter</button><button class="link" type="button" data-m="reset">Mot de passe oublié ?</button>`;
+    if (m === "login" && AUTH.pending) form = `<p class="muted" style="font-size:14px">Entrez le code à 6 chiffres de votre application d'authentification, ou un code de secours.</p>`
+      + field("Code 2FA ou code de secours", "otp", "text", "required autocomplete=\"one-time-code\" inputmode=\"text\"")
+      + `<p class="err" id="err"></p><button class="pbtn" type="submit">Valider</button>`;
+    if (m === "signup") form = field("Pseudo (visible dans la ligue)", "name", "text", "required maxlength=\"24\"") + field("Adresse e-mail", "email", "email", "required autocomplete=\"email\"")
+      + field("Mot de passe (8 caractères minimum)", "pw", "password", "required minlength=\"8\" autocomplete=\"new-password\"") + field("Confirmez le mot de passe", "pw2", "password", "required minlength=\"8\" autocomplete=\"new-password\"")
+      + `<p class="err" id="err"></p><button class="pbtn" type="submit">Créer mon compte</button>`;
+    if (m === "reset") form = `<p class="muted" style="font-size:14px">Cette version n'envoie pas d'e-mail. Utilisez un code de secours reçu lors de la création de votre compte.</p>`
+      + field("Adresse e-mail", "email", "email", "required") + field("Code de secours", "code", "text", "required") + field("Nouveau mot de passe (8 caractères minimum)", "pw", "password", "required minlength=\"8\"")
+      + `<p class="err" id="err"></p><button class="pbtn" type="submit">Réinitialiser le mot de passe</button>`;
+    A.innerHTML = `<div class="brand" style="margin:0 0 14px"><h1 style="font-size:1.8rem;margin:0">Kana &amp; Kotoba</h1></div>${tabs}<form id="authForm" autocomplete="on">${form}</form>`;
+    A.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { AUTH.mode = b.dataset.m; AUTH.pending = null; renderAuth(); });
+    $("#authForm").onsubmit = handleAuth;
+  }
+  function setErr(msg) { const e = $("#err"); if (e) e.textContent = msg; }
+  async function handleAuth(e) {
+    e.preventDefault(); const f = e.target;
+    if (AUTH.mode === "login" && AUTH.pending) {
+      const acc = accounts[AUTH.pending], code = f.otp.value.trim().replace(/\s/g, "");
+      const ok = (/^\d{6}$/.test(code) && await verifyTotp(acc.totp, code)) || await takeRecoveryCode(acc, f.otp.value);
+      return ok ? loginAs(acc) : setErr("Code incorrect.");
+    }
+    if (AUTH.mode === "login") {
+      const email = f.email.value.trim().toLowerCase(), acc = accounts[email];
+      if (!acc || !(await checkSecret(f.pw.value, acc.pw))) return setErr("E-mail ou mot de passe incorrect.");
+      if (acc.totp) { AUTH.pending = email; return renderAuth(); }
+      return loginAs(acc);
+    }
+    if (AUTH.mode === "signup") {
+      const name = f.name.value.trim(), email = f.email.value.trim().toLowerCase(), pw = f.pw.value;
+      if (!name) return setErr("Indiquez un pseudo.");
+      if (!/^\S+@\S+\.\S+$/.test(email)) return setErr("Adresse e-mail invalide.");
+      if (pw.length < 8) return setErr("Le mot de passe doit faire au moins 8 caractères.");
+      if (pw !== f.pw2.value) return setErr("Les mots de passe ne correspondent pas.");
+      if (accounts[email]) return setErr("Un compte existe déjà avec cette adresse.");
+      const codes = newCodes();
+      const acc = { email, name, pw: await hashSecret(pw), totp: null, recovery: await sealCodes(codes), avatar: { emoji: "🌸", bg: "#F4B6C6" }, progress: migrateProgress() };
+      accounts[email] = acc; persistAccounts();
+      AUTH.codes = codes; AUTH.acc = acc; AUTH.mode = "codes"; renderAuth();
+      return;
+    }
+    if (AUTH.mode === "reset") {
+      const acc = accounts[f.email.value.trim().toLowerCase()];
+      if (f.pw.value.length < 8) return setErr("Le mot de passe doit faire au moins 8 caractères.");
+      if (!acc || !(await takeRecoveryCode(acc, f.code.value))) return setErr("Code de secours invalide ou déjà utilisé.");
+      acc.pw = await hashSecret(f.pw.value); persistAccounts();
+      toast("Mot de passe réinitialisé"); AUTH.mode = "login"; renderAuth();
+    }
+  }
+
+  /* Menu profil */
+  function openMenu() {
+    if (!ACCT) return;
+    const m = $("#menu"); m.hidden = !m.hidden; if (m.hidden) return;
+    m.innerHTML = `<div class="who"><strong>${esc(ACCT.name)}</strong><div class="muted" style="font-size:13px">${esc(ACCT.email)}</div></div>
+      <button data-a="profile" type="button">Mon profil</button><button data-a="settings" type="button">Paramètres</button>
+      <button data-a="security" type="button">Sécurité et 2FA</button><button data-a="logout" type="button">Se déconnecter</button>`;
+    m.querySelectorAll("button").forEach(b => b.onclick = () => {
+      const a = b.dataset.a; closeMenu();
+      if (a === "logout") logout(); else openSettings(a === "security" ? "security" : "profile");
+    });
+  }
+  function closeMenu() { $("#menu").hidden = true; }
+  $("#avatarBtn").addEventListener("click", e => { e.stopPropagation(); openMenu(); });
+  document.addEventListener("click", e => { if (!e.target.closest("#menu, #avatarBtn")) closeMenu(); });
+
+  /* Réglages */
+  function openSettings(section) { $("#modal").hidden = false; renderSettings(section); }
+  function closeSettings() { $("#modal").hidden = true; }
+  $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSettings(); });
+  function renderSettings(section) {
+    const B = $("#modalBody"), acc = ACCT;
+    if (!acc) return;
+    const left = (acc.recovery || []).filter(r => !r.used).length;
+    B.innerHTML = `
+      <div class="row2" style="border:0;padding-top:0"><h2 style="margin:0;font:700 1.3rem var(--display)">Paramètres</h2><button class="close" id="mClose" type="button" aria-label="Fermer">✕</button></div>
+      <h3>Profil</h3>
+      <div class="field"><label for="nm">Pseudo (visible dans la ligue)</label><input id="nm" value="${esc(acc.name)}" maxlength="24"></div>
+      <button class="pbtn" id="saveName" type="button">Enregistrer le pseudo</button>
+      <h3>Avatar</h3>
+      <div class="drop" id="drop">Glissez une image ici, ou <u>choisissez un fichier</u><input type="file" id="file" accept="image/*" hidden></div>
+      <div style="display:flex;gap:12px;align-items:center;margin:14px 0 8px">
+        <div class="avatarbtn" style="width:64px;height:64px">${avatarHTML(acc.avatar, 64)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${AV_EMOJI.map(e => `<button class="emo" data-e="${e}" type="button">${e}</button>`).join("")}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${AV_BG.map(c => `<button class="swatch" data-bg="${c}" type="button" style="background:${c}"></button>`).join("")}
+        <button class="link" id="rmPhoto" type="button" style="margin:0 0 0 6px">Retirer la photo</button></div>
+      <h3>Préférences</h3>
+      <div class="row2"><span>Sons</span><button class="chip-btn" id="sndT" type="button">${data.sound ? "Activés" : "Coupés"}</button></div>
+      <div class="row2"><span>Décor</span><button class="chip-btn" id="thmT" type="button">${data.equip.theme === "or" ? "Aube dorée" : "Nuit de Kyoto"}</button></div>
+      <h3 id="sec">Mot de passe</h3>
+      <form id="pwForm"><div class="field"><label for="cur">Mot de passe actuel</label><input id="cur" type="password" required></div>
+        <div class="field"><label for="nw">Nouveau mot de passe (8 caractères minimum)</label><input id="nw" type="password" minlength="8" required></div>
+        <button class="pbtn" type="submit">Changer le mot de passe</button></form>
+      <h3>Double authentification (2FA)</h3>
+      <div id="twofa"></div>
+      <h3>Codes de secours</h3>
+      <p class="muted" style="font-size:14px">${left} code(s) restant(s).</p>
+      <button class="link" id="regen" type="button">Générer de nouveaux codes</button>
+      <div id="newCodes"></div>
+      <div class="row2" style="margin-top:20px;border:0"><button class="link" id="logout2" type="button" style="color:var(--ko)">Se déconnecter</button></div>`;
+    $("#mClose").onclick = closeSettings;
+    $("#saveName").onclick = () => {
+      const v = $("#nm").value.trim(); if (v) acc.name = v.slice(0, 24);
+      persistAccounts(); renderAvatarBtn(); syncLeague(); toast("Pseudo enregistré");
+    };
+    bindAvatarDrop();
+    B.querySelectorAll(".emo").forEach(b => b.onclick = () => { acc.avatar = { emoji: b.dataset.e, bg: (acc.avatar && acc.avatar.bg) || AV_BG[0] }; avatarChanged(); });
+    B.querySelectorAll(".swatch").forEach(b => b.onclick = () => { acc.avatar = { emoji: (acc.avatar && acc.avatar.emoji) || "🌸", bg: b.dataset.bg }; avatarChanged(); });
+    $("#rmPhoto").onclick = () => { acc.avatar = { emoji: "🌸", bg: AV_BG[0] }; avatarChanged(); };
+    $("#sndT").onclick = () => { data.sound = !data.sound; save(); renderTop(); renderSettings("profile"); };
+    $("#thmT").onclick = () => {
+      if (!data.owned.or) return toast("Achetez « Aube dorée » dans la boutique");
+      data.equip.theme = data.equip.theme === "or" ? "nuit" : "or";
+      document.body.classList.toggle("theme-or", data.equip.theme === "or"); save(); renderSettings("profile");
+    };
+    $("#pwForm").onsubmit = async e => {
+      e.preventDefault();
+      if (!(await checkSecret($("#cur").value, acc.pw))) return toast("Mot de passe actuel incorrect");
+      acc.pw = await hashSecret($("#nw").value); persistAccounts(); toast("Mot de passe modifié");
+      $("#pwForm").reset();
+    };
+    renderTwoFA();
+    $("#regen").onclick = async () => {
+      if (!confirm("Les anciens codes ne fonctionneront plus. Continuer ?")) return;
+      const codes = newCodes(); acc.recovery = await sealCodes(codes); persistAccounts();
+      $("#newCodes").innerHTML = `<div class="codes">${codes.map(c => `<span>${c}</span>`).join("")}</div><p class="muted" style="font-size:13px">Notez-les maintenant, ils ne seront plus affichés.</p>`;
+    };
+    $("#logout2").onclick = logout;
+    if (section === "security") $("#sec").scrollIntoView({ block: "start" });
+  }
+  function renderTwoFA() {
+    const acc = ACCT, box = $("#twofa");
+    if (acc.totp) {
+      box.innerHTML = `<p class="muted" style="font-size:14px">Activée. Un code est demandé à chaque connexion.</p>
+        <div class="field"><label for="offCode">Code actuel pour la désactiver</label><input id="offCode" inputmode="numeric" maxlength="6"></div>
+        <button class="pbtn" id="offBtn" type="button" style="background:var(--ko);box-shadow:0 5px 0 #B34A4A;color:#fff">Désactiver la 2FA</button>`;
+      $("#offBtn").onclick = async () => {
+        const c = $("#offCode").value.trim();
+        if (await verifyTotp(acc.totp, c) || await takeRecoveryCode(acc, c)) { acc.totp = null; persistAccounts(); toast("2FA désactivée"); renderSettings("security"); }
+        else toast("Code incorrect");
+      };
+      return;
+    }
+    if (!SETUP) {
+      box.innerHTML = `<p class="muted" style="font-size:14px">Ajoutez une couche de sécurité : un code à 6 chiffres, généré par une application comme Google Authenticator, Aegis ou Bitwarden, est demandé à chaque connexion.</p>
+        <button class="pbtn" id="startTotp" type="button">Activer la 2FA</button>`;
+      $("#startTotp").onclick = () => { SETUP = b32encode(crypto.getRandomValues(new Uint8Array(20))); renderSettings("security"); };
+      return;
+    }
+    const uri = `otpauth://totp/Kana%20%26%20Kotoba:${encodeURIComponent(acc.email)}?secret=${SETUP}&issuer=Kana%20%26%20Kotoba`;
+    box.innerHTML = `<p class="muted" style="font-size:14px">Dans votre application, ajoutez un compte avec cette clé :</p>
+      <div class="codes" style="grid-template-columns:1fr;letter-spacing:2px">${SETUP}</div>
+      <p class="muted" style="font-size:12px;word-break:break-all">${uri}</p>
+      <div class="field"><label for="setCode">Code à 6 chiffres pour confirmer</label><input id="setCode" inputmode="numeric" maxlength="6"></div>
+      <button class="pbtn" id="confirm2fa" type="button">Confirmer et activer</button>`;
+    $("#confirm2fa").onclick = async () => {
+      const c = $("#setCode").value.replace(/\s/g, "");
+      if (await verifyTotp(SETUP, c)) { acc.totp = SETUP; SETUP = null; persistAccounts(); toast("2FA activée"); renderSettings("security"); }
+      else toast("Code incorrect");
+    };
+  }
+  function avatarChanged() { persistAccounts(); renderAvatarBtn(); syncLeague(); renderSettings("profile"); }
+  function bindAvatarDrop() {
+    const d = $("#drop"), f = $("#file");
+    d.onclick = () => f.click();
+    d.ondragover = e => { e.preventDefault(); d.classList.add("over"); };
+    d.ondragleave = () => d.classList.remove("over");
+    d.ondrop = e => { e.preventDefault(); d.classList.remove("over"); fileToAvatar(e.dataTransfer.files[0]); };
+    f.onchange = () => fileToAvatar(f.files[0]);
+  }
+  function fileToAvatar(file) {
+    if (!file || !file.type.startsWith("image/")) return toast("Choisissez un fichier image");
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = c.height = 128;
+      const x = c.getContext("2d"), s = Math.min(img.width, img.height);
+      x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 128, 128);
+      ACCT.avatar = { src: c.toDataURL("image/jpeg", .85) };
+      URL.revokeObjectURL(url); toast("Avatar mis à jour"); avatarChanged();
+    };
+    img.src = url;
+  }
+
+  /* Ligue : classement hebdomadaire par niveau de ligue (selon l'XP totale) */
+  function weekKey() { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return dayKey(d); }
+  function rollWeek() {
+    const w = weekKey();
+    if (data.weekId !== w) {
+      if (data.weekId) data.pendingClose = { week: data.weekId, xp: data.weekXp || 0, tier: data.tier || 0 };
+      data.weekId = w; data.weekXp = 0;
+    }
+    resolveClose();
+  }
+  function resolveClose() {
+    const p = data.pendingClose; if (!p) return;
+    if (LEAGUE.mode !== "online") { data.pendingClose = null; save(); return; }
+    if (!LEAGUE.loaded) return;
+    const others = LEAGUE.rows.filter(r => r.weekId === p.week && r.tier === p.tier && r.id !== LEAGUE.uid).map(r => r.weekXp || 0);
+    const all = [...others, p.xp].sort((a, b) => b - a);
+    const rank = all.indexOf(p.xp) + 1, N = all.length;
+    let tier = p.tier, msg;
+    if (rank <= 3 && p.xp > 0 && tier < TIERS.length - 1) { tier++; msg = `Semaine dernière : ${rank}e de votre ligue, promotion en ${TIERS[tier].name} ${TIERS[tier].ico}.`; }
+    else if (rank >= 15 && N >= 15 && tier > 0) { tier--; msg = `Semaine dernière : ${rank}e place sur ${N}, relégation en ${TIERS[tier].name} ${TIERS[tier].ico}.`; }
+    else msg = `Semaine dernière : ${rank}e place sur ${N}. Ligue inchangée.`;
+    data.tier = tier; data.lastResult = msg; data.pendingClose = null;
+    save(); syncLeague(); renderLeague(); toast(msg);
+  }
+  function tierOf(xp) { let t = TIERS[0]; for (const x of TIERS) if (xp >= x.min) t = x; return t; }
+  function nextTier(xp) { return TIERS.find(x => x.min > xp) || null; }
+  async function connectLeague() {
+    try {
+      const user = window.claude ? await window.claude.use("user") : null;
+      const db = window.claude ? await window.claude.use("db") : null;
+      const uid = user ? await user.id() : null;
+      if (!db || !uid) throw new Error("offline");
+      LEAGUE.db = db; LEAGUE.uid = uid; LEAGUE.mode = "online";
+      db.collection("league").onSnapshot(snap => {
+        LEAGUE.rows = snap.docs.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() })); LEAGUE.loaded = true; resolveClose(); renderLeague();
+      }, () => { LEAGUE.mode = "offline"; renderLeague(); });
+      syncLeague();
+    } catch (e) { LEAGUE.mode = "offline"; resolveClose(); }
+    renderLeague();
+  }
+  function syncLeague() {
+    if (!ACCT || !LEAGUE.db || !LEAGUE.uid) return;
+    clearTimeout(LEAGUE.timer);
+    LEAGUE.timer = setTimeout(() => {
+      try {
+        LEAGUE.db.doc("league/" + LEAGUE.uid).set({
+          name: ACCT.name, avatar: ACCT.avatar, tier: data.tier || 0,
+          xp: data.xp, weekId: data.weekId || weekKey(), weekXp: data.weekXp || 0
+        }).catch(() => {});
+      } catch (e) {}
+    }, 1500);
+  }
+  function renderLeague() {
+    const B = $("#ligueBody");
+    if (!ACCT) { B.innerHTML = `<p class="muted">Connectez-vous pour rejoindre une ligue.</p>`; return; }
+    rollWeek();
+    const t = TIERS[data.tier || 0];
+    const pct = Math.min(100, Math.round((data.weekXp || 0) / 300 * 100));
+    let rows;
+    if (LEAGUE.mode === "online") {
+      rows = LEAGUE.rows.filter(r => r.tier === (data.tier || 0) && r.weekId === data.weekId).sort((a, b) => (b.weekXp || 0) - (a.weekXp || 0)).slice(0, 30);
+    } else {
+      rows = [{ id: "me", name: ACCT.name, avatar: ACCT.avatar, weekXp: data.weekXp || 0 }];
+    }
+    const isMe = r => r.id === LEAGUE.uid || (LEAGUE.mode !== "online" && r.id === "me");
+    const medal = i => ["🥇", "🥈", "🥉"][i] || (i + 1);
+    B.innerHTML = `
+      <div class="today" style="justify-content:space-between;margin-top:18px">
+        <div><div class="muted" style="font-size:13px">Ligue actuelle</div><div style="font:900 1.9rem var(--display)">${t.ico} ${t.name}</div></div>
+        <div style="text-align:right"><div class="muted" style="font-size:13px">XP cette semaine</div><div style="font:900 1.6rem var(--display);color:var(--gold)">${data.weekXp || 0}</div></div>
+      </div>
+      <div class="bar" style="height:8px;background:var(--ai-3);border-radius:999px;overflow:hidden;margin:6px 0 6px"><i style="display:block;height:100%;width:${pct}%;background:linear-gradient(90deg,var(--sakura),var(--gold))"></i></div>
+      <p class="muted" style="font-size:13px;margin:0">${data.lastResult || "Gagnez de l'XP cette semaine pour grimper dans le classement. Objectif de référence : 300 XP."}</p>
+      ${LEAGUE.mode === "online" ? "" : `<p class="muted" style="font-size:13px">Le classement entre joueurs s'affiche quand l'application est ouverte depuis votre compte claude.ai. Vous voyez ici votre position seule.</p>`}
+      <table class="lb">${rows.map((r, i) => `<tr class="${isMe(r) ? "me" : ""}"><td class="rank">${medal(i)}</td>
+        <td><span class="miniav">${avatarHTML(r.avatar, 28)}</span>${esc(r.name || "Joueur")}${isMe(r) ? " (vous)" : ""}</td>
+        <td style="text-align:right">${r.weekXp || 0} XP</td></tr>`).join("")}</table>
+      <p class="muted" style="font-size:12px;margin-top:12px">Les 3 premiers de la semaine montent de ligue. Les joueurs classés 15e ou plus descendent de ligue, lorsque la ligue compte au moins 15 joueurs ayant joué. Le classement repart à zéro chaque lundi.</p>`;
+  }
+
+  /* ===== Adaptation : niveau, questions et gains selon les statistiques ===== */
+  const QTITLE = { kana: "Quelle est la lecture de ce caractère ?", kanji: "Quel est le sens de ce kanji ?", vocab: "Quel est le sens de ce mot ?", grammar: "Quelle particule ou terminaison complète la phrase ?", compound: "Que signifie ce mot composé ?" };
+  function recentAcc() { const r = data.recent || []; return r.length ? r.filter(Boolean).length / r.length : .7; }
+  function optCount() { return data.level >= 3 ? 4 : 3; }
+  function recordItem(it, ok) {
+    const id = it.kind + ":" + it.c, s = data.istat[id] || { a: 0, c: 0 };
+    s.a++; if (ok) s.c++; data.istat[id] = s;
+    data.recent = [...(data.recent || []), ok].slice(-20);
+    // Le niveau change après au moins 10 réponses, puis la fenêtre repart à zéro
+    if (data.recent.length >= 10) {
+      const acc = recentAcc();
+      if (acc >= .85 && data.level < 5) { data.level++; data.recent = []; toast("Niveau " + data.level + " débloqué"); }
+      else if (acc < .5 && data.level > 1) { data.level--; data.recent = []; toast("Niveau " + data.level + " : on consolide"); }
+    }
+  }
+  function weightedPick(items, n) {
+    const out = []; let last = null;
+    for (let i = 0; i < n; i++) {
+      const cand = items.length > 1 ? items.filter(it => it !== last) : items;
+      const w = cand.map(it => { const s = data.istat[it.kind + ":" + it.c]; if (!s || !s.a) return 3; return .4 + (1 - s.c / s.a) * 3; });
+      let t = Math.random() * w.reduce((x, y) => x + y, 0), pick = cand[cand.length - 1];
+      for (let j = 0; j < cand.length; j++) { t -= w[j]; if (t <= 0) { pick = cand[j]; break; } }
+      out.push(pick); last = pick;
+    }
+    return out;
+  }
+  function explain(it) {
+    if (it.kind === "kana") return `${it.c} se lit « ${it.label} ».`;
+    if (it.kind === "kanji") return `${it.c} signifie « ${it.label} ».`;
+    if (it.kind === "vocab") return `${it.c} (${it.r}) signifie « ${it.label} ».`;
+    if (it.kind === "grammar") return `La bonne réponse est « ${it.label} ». ${it.fr}`;
+    return `${it.c} signifie « ${it.label} ». ${it.parts}`;
+  }
+
+  /* ===== Fond animé : suit le thème du vocabulaire en cours ===== */
+  const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function hillsSVG(t) {
+    const [c1, c2] = t.hill; let body = "";
+    if (t.shape === "mount") body = `<path fill="${c1}" d="M0 230 L120 150 L230 210 L380 120 L520 200 L640 140 L780 220 L920 110 L1080 200 L1200 150 L1320 210 L1440 170 L1440 320 L0 320Z"/><path fill="${c2}" d="M0 270 L160 220 L300 265 L470 200 L650 262 L820 215 L1000 268 L1180 225 L1330 262 L1440 240 L1440 320 L0 320Z"/>`;
+    else if (t.shape === "hills") body = `<path fill="${c1}" d="M0 220 Q180 150 360 205 T720 195 T1080 185 T1440 215 L1440 320 L0 320Z"/><path fill="${c2}" d="M0 270 Q240 230 480 265 T960 255 T1440 262 L1440 320 L0 320Z"/>`;
+    else if (t.shape === "city") { for (let i = 0; i < 26; i++) { const w = 36 + (i * 53) % 40, h = 70 + (i * 71) % 120; body += `<rect x="${i * 56 - 10}" y="${320 - h}" width="${w}" height="${h}" fill="${i % 3 ? c1 : c2}"/>`; } }
+    else { for (let i = 0; i < 34; i++) { const x = i * 44 - 10, h = 80 + (i * 37) % 80; body += `<polygon fill="${i % 2 ? c1 : c2}" points="${x},320 ${x + 26},${320 - h} ${x + 52},320"/>`; } }
+    return `<svg class="hills" viewBox="0 0 1440 320" preserveAspectRatio="none">${body}</svg>`;
+  }
+  function setBgFor(unit) {
+    const key = !unit ? "sakura" : unit.kind === "vocab" ? (VOCAB_BG[Number(String(unit.id).slice(1))] || "sakura") : (KIND_BG[unit.kind] || "sakura");
+    if (key === BG.key) return;
+    BG.key = key;
+    const host = $("#bgSky"), old = [...host.children], t = BG_THEMES[key];
+    const L = document.createElement("div");
+    L.className = "bgl in" + (t.hue ? " hue" : "");
+    L.style.background = `linear-gradient(180deg, ${t.sky.join(", ")})`;
+    L.innerHTML = `<div class="sun" style="background:radial-gradient(circle at 40% 40%, #fff, ${t.sun} 55%, ${t.sun}88 100%);box-shadow:0 0 90px 18px ${t.sun}44"></div>${hillsSVG(t)}`;
+    host.appendChild(L);
+    old.forEach(o => { o.classList.remove("in"); o.classList.add("out"); setTimeout(() => o.remove(), 1300); });
+    setFx(t.fx);
+  }
+  function setFx(kind) {
+    FX.kind = matchMedia("(prefers-reduced-motion: reduce)").matches ? "none" : kind;
+    petals = FX.kind === "petal" ? Array.from({ length: 42 }, () => mkPetal(true)) : [];
+    const n = { rain: 110, firefly: 36, leaf: 26, spark: 46, streak: 22, steam: 16 }[FX.kind] || 0;
+    FX.ps = Array.from({ length: n }, () => spawnFx(FX.kind, true));
+    resizeFx();
+  }
+  function resizeFx() {
+    const c = $("#fx"), d = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = innerWidth * d; c.height = innerHeight * d;
+    c.getContext("2d").setTransform(d, 0, 0, d, 0, 0);
+  }
+  addEventListener("resize", resizeFx);
+  function spawnFx(kind, init) {
+    const W = innerWidth, H = innerHeight, r = Math.random;
+    if (kind === "rain") return { x: r() * W, y: init ? r() * H : -20, v: 8 + r() * 7, l: 12 + r() * 12 };
+    if (kind === "firefly") return { x: r() * W, y: r() * H, vx: (r() - .5) * .35, vy: (r() - .5) * .35, ph: r() * 6.28, r: 1.6 + r() * 1.6 };
+    if (kind === "leaf") return { x: r() * W, y: init ? r() * H : -30, vx: .6 + r(), vy: .5 + r() * .8, a: r() * 6.28, va: (r() - .5) * .05, s: 6 + r() * 6, sw: r() * 6.28 };
+    if (kind === "spark") return { x: r() * W, y: init ? r() * H : H + 10, vy: -(.25 + r() * .8), s: .8 + r() * 1.8, ph: r() * 6.28 };
+    if (kind === "streak") return { x: init ? r() * W : -200, y: r() * H, v: 14 + r() * 16, len: 80 + r() * 140 };
+    return { x: r() * W, y: init ? r() * H : H + 20, vy: -(.35 + r() * .6), r: 18 + r() * 28, a: .07 + r() * .06 };
+  }
+  function fxFrame(now) {
+    requestAnimationFrame(fxFrame);
+    if (!FX.ps.length) return;
+    const x = $("#fx").getContext("2d"), W = innerWidth, H = innerHeight, t = now || 0;
+    x.clearRect(0, 0, W, H);
+    for (const p of FX.ps) {
+      if (FX.kind === "rain") {
+        x.strokeStyle = "rgba(190,210,235,.35)"; x.lineWidth = 1;
+        x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(p.x - 3, p.y + p.l); x.stroke();
+        p.y += p.v; if (p.y > H + 20) Object.assign(p, spawnFx("rain", false));
+      } else if (FX.kind === "firefly") {
+        const a = .35 + .65 * (.5 + .5 * Math.sin(t * .002 + p.ph));
+        p.x += p.vx + Math.sin(t * .001 + p.ph) * .15; p.y += p.vy + Math.cos(t * .0013 + p.ph) * .12;
+        if (p.x < -10) p.x = W + 10; if (p.x > W + 10) p.x = -10; if (p.y < -10) p.y = H + 10; if (p.y > H + 10) p.y = -10;
+        x.shadowBlur = 14; x.shadowColor = "rgba(255,230,140,.9)"; x.fillStyle = `rgba(255,236,160,${a})`;
+        x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.283); x.fill(); x.shadowBlur = 0;
+      } else if (FX.kind === "leaf") {
+        p.sw += .02; p.a += p.va; p.y += p.vy; p.x += Math.sin(p.sw) * .8 + p.vx * .3;
+        if (p.y > H + 30) Object.assign(p, spawnFx("leaf", false));
+        x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = "rgba(224,136,74,.85)";
+        x.beginPath(); x.ellipse(0, 0, p.s, p.s * .5, 0, 0, 6.283); x.fill(); x.restore();
+      } else if (FX.kind === "spark") {
+        p.y += p.vy; p.x += Math.sin(t * .002 + p.ph) * .3;
+        if (p.y < -10) Object.assign(p, spawnFx("spark", false));
+        const a = .35 + .4 * Math.sin(t * .003 + p.ph) ** 2;
+        x.fillStyle = `rgba(255,215,120,${a})`; x.beginPath(); x.arc(p.x, p.y, p.s, 0, 6.283); x.fill();
+      } else if (FX.kind === "streak") {
+        p.x += p.v; if (p.x - p.len > W + 40) Object.assign(p, spawnFx("streak", false));
+        const g = x.createLinearGradient(p.x - p.len, p.y, p.x, p.y);
+        g.addColorStop(0, "rgba(160,220,255,0)"); g.addColorStop(1, "rgba(160,220,255,.55)");
+        x.strokeStyle = g; x.lineWidth = 1.5; x.beginPath(); x.moveTo(p.x - p.len, p.y); x.lineTo(p.x, p.y); x.stroke();
+      } else if (FX.kind === "steam") {
+        p.y += p.vy; p.r += .08; if (p.y < -60) Object.assign(p, spawnFx("steam", false));
+        x.fillStyle = `rgba(255,236,200,${p.a * Math.max(0, (p.y + 60) / H)})`;
+        x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.283); x.fill();
+      }
+    }
+  }
+  requestAnimationFrame(fxFrame);
+
+  /* Fenêtre d'introduction : sans fond, titre animé, coins arrondis */
+  function showIntro(unit) {
+    document.querySelectorAll("#intro").forEach(n => n.remove());
+    const d = document.createElement("div");
+    d.id = "intro"; d.className = "intro";
+    d.innerHTML = `<div class="intro-card">
+        <p class="intro-kicker">${esc(unit.unit)} · niveau ${data.level}</p>
+        <h2 class="intro-title">${esc(unit.t)}</h2>
+        <div class="intro-chars">${unit.items.slice(0, 6).map(x => esc(x.c)).join(" ")}</div>
+        <p class="intro-meta">10 questions · ${optCount()} réponses par question</p>
+        <button class="intro-go" type="button">C'est parti !</button><br>
+        <button class="intro-cancel" type="button">Plus tard</button>
+      </div>`;
+    document.body.appendChild(d);
+    d.querySelector(".intro-go").onclick = () => { d.remove(); $("#lesson").hidden = false; ask(); };
+    d.querySelector(".intro-cancel").onclick = () => { d.remove(); L = null; };
+  }
+
+  // Démarrage des comptes : voir api.js
+</script>
+<script src="/api.js"></script>
+<script src="/chat-ui.js"></script>
+<script src="/profil.js"></script>
+<script>bootAuth();</script>
+</body>
+</html>

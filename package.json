@@ -1,0 +1,12 @@
+{
+  "name": "kana-kotoba",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apprendre le japonais : comptes, 2FA, progression et ligue",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
