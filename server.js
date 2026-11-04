@@ -282,7 +282,7 @@ async function api(req, res, p) {
   return send(res, 404, { ok: false, error: "Route inconnue" });
 }
 
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json" };
+const TYPES = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json" };
 function serveStatic(res, p) {
   const file = path.normalize(path.join(PUB, p === "/" ? "/index.html" : p));
   if (!file.startsWith(PUB)) { res.writeHead(403); return res.end(); }
