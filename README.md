@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Kana & Kotoba — server version
 
 ## Start the project in IntelliJ IDEA or another IDE
@@ -46,3 +47,7 @@ kana-kotoba/
 - **No attempt limiting**: nothing prevents looping through password guesses. Add this before any public launch.
 - **League**: the leaderboard is read from the server and contains the username, avatar, tier and weekly XP of all players.
 - **Old online version**: the page published on claude.ai still uses browser storage. It cannot connect to this local server.
+=======
+# kana-kotoba
+It' a website to learn japoneses, like duolingo.
+>>>>>>> c7e5312772bdf182e5d0615a791a551e0eda3b3f
